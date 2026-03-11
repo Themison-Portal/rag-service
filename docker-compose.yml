@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  rag-service:
+    build: .
+    container_name: themison-rag-service
+    restart: unless-stopped
+    ports:
+      - "50051:50051"
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      # API Keys (from .env file or environment)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # Configuration
+      GRPC_PORT: 50051
+      GRPC_MAX_WORKERS: 10
+      HYBRID_SEARCH_ENABLED: "true"
+      SEMANTIC_CACHE_SIMILARITY_THRESHOLD: "0.90"
+      LLM_MODEL: "claude-sonnet-4-20250514"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import grpc; channel = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(channel).result(timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # PostgreSQL with pgvector extension (shared with backend)
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: themison-db
+    restart: unless-stopped
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

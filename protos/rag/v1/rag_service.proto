@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package themison.rag.v1;
+
+option go_package = "github.com/themison/rag-service/gen/go/rag/v1;ragv1";
+
+// RAG Service for PDF ingestion, retrieval, and generation
+service RagService {
+  // Ingest PDF with streaming progress updates
+  rpc IngestPdf(IngestPdfRequest) returns (stream IngestPdfProgress);
+
+  // RAG query - retrieve relevant chunks and generate answer
+  rpc Query(QueryRequest) returns (QueryResponse);
+
+  // Get highlighted PDF page with bboxes
+  rpc GetHighlightedPdf(GetHighlightedPdfRequest) returns (HighlightedPdfResponse);
+
+  // Invalidate cache for a document (called on re-upload)
+  rpc InvalidateDocument(InvalidateDocumentRequest) returns (InvalidateDocumentResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// =====================
+// Ingest PDF Messages
+// =====================
+
+message IngestPdfRequest {
+  string document_url = 1;
+  string document_id = 2;  // UUID string
+  int32 chunk_size = 3;    // Default: 750 tokens
+}
+
+message IngestPdfProgress {
+  // Stage of ingestion
+  IngestStage stage = 1;
+  // Progress percentage (0-100)
+  int32 progress_percent = 2;
+  // Status message
+  string message = 3;
+  // Final result (only populated when stage == COMPLETE)
+  IngestResult result = 4;
+}
+
+enum IngestStage {
+  INGEST_STAGE_UNSPECIFIED = 0;
+  INGEST_STAGE_DOWNLOADING = 1;
+  INGEST_STAGE_PARSING = 2;
+  INGEST_STAGE_CHUNKING = 3;
+  INGEST_STAGE_EMBEDDING = 4;
+  INGEST_STAGE_STORING = 5;
+  INGEST_STAGE_COMPLETE = 6;
+  INGEST_STAGE_ERROR = 7;
+}
+
+message IngestResult {
+  bool success = 1;
+  string document_id = 2;
+  string status = 3;
+  int32 chunks_count = 4;
+  string created_at = 5;  // ISO 8601 timestamp
+  string error = 6;       // Error message if success == false
+}
+
+// =====================
+// Query Messages
+// =====================
+
+message QueryRequest {
+  string query = 1;
+  string document_id = 2;     // UUID string
+  string document_name = 3;
+  int32 top_k = 4;            // Default: 20
+  double min_score = 5;       // Default: 0.04
+}
+
+message QueryResponse {
+  RagAnswer answer = 1;
+  QueryTiming timing = 2;
+  CacheInfo cache_info = 3;
+}
+
+message RagAnswer {
+  string response = 1;
+  repeated RagSource sources = 2;
+}
+
+message RagSource {
+  string name = 1;
+  int32 page = 2;
+  string section = 3;           // Optional
+  string exact_text = 4;
+  repeated BBox bboxes = 5;
+  Relevance relevance = 6;
+}
+
+message BBox {
+  double x0 = 1;
+  double y0 = 2;
+  double x1 = 3;
+  double y1 = 4;
+}
+
+enum Relevance {
+  RELEVANCE_UNSPECIFIED = 0;
+  RELEVANCE_HIGH = 1;
+  RELEVANCE_MEDIUM = 2;
+  RELEVANCE_LOW = 3;
+}
+
+message QueryTiming {
+  double embedding_ms = 1;
+  double retrieval_ms = 2;
+  double generation_ms = 3;
+  double total_ms = 4;
+  int32 chunks_retrieved = 5;
+  int32 chunks_compressed = 6;
+}
+
+message CacheInfo {
+  bool embedding_cache_hit = 1;
+  bool semantic_cache_hit = 2;
+  bool chunk_cache_hit = 3;
+  bool response_cache_hit = 4;
+  double semantic_similarity = 5;  // Only set if semantic_cache_hit
+}
+
+// =====================
+// Highlighted PDF Messages
+// =====================
+
+message GetHighlightedPdfRequest {
+  string document_url = 1;
+  int32 page = 2;
+  repeated BBox bboxes = 3;
+}
+
+message HighlightedPdfResponse {
+  bytes pdf_content = 1;
+  string content_type = 2;  // application/pdf
+}
+
+// =====================
+// Cache Invalidation Messages
+// =====================
+
+message InvalidateDocumentRequest {
+  string document_id = 1;  // UUID string
+}
+
+message InvalidateDocumentResponse {
+  bool success = 1;
+  int32 chunks_deleted = 2;
+  int32 cache_entries_deleted = 3;
+}
+
+// =====================
+// Health Check Messages
+// =====================
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  ServiceStatus status = 1;
+  string version = 2;
+  repeated ComponentHealth components = 3;
+}
+
+enum ServiceStatus {
+  SERVICE_STATUS_UNSPECIFIED = 0;
+  SERVICE_STATUS_SERVING = 1;
+  SERVICE_STATUS_NOT_SERVING = 2;
+}
+
+message ComponentHealth {
+  string name = 1;
+  bool healthy = 2;
+  string message = 3;
+}

@@ -1,0 +1,10 @@
+version: v2
+modules:
+  - path: protos
+    name: buf.build/themison/rag-service
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE
