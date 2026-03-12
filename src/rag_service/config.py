@@ -55,6 +55,22 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
+    @classmethod
+    def strip_strings(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+    from pydantic import field_validator
+
+    @field_validator("openai_api_key", "anthropic_api_key", "database_url")
+    @classmethod
+    def clean_secrets(cls, v):
+        if isinstance(v, str):
+            # Also handle potential quotes or escaped newlines
+            return v.strip().replace('"', '').replace("'", "")
+        return v
+
 
 @lru_cache()
 def get_settings() -> Settings:
