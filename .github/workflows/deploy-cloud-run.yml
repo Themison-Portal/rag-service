@@ -1,0 +1,50 @@
+name: Deploy RAG Service to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: braided-visitor-484216-i0
+  REGION: europe-west1
+  SERVICE_NAME: rag-service-eu
+  ARTIFACT_REGISTRY: europe-west1-docker.pkg.dev/braided-visitor-484216-i0/themison-repo-eu
+  IMAGE_NAME: rag-service
+
+jobs:
+  deploy:
+    name: Build & Deploy RAG Service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authenticate Docker to Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker image
+        run: |
+          IMAGE_PATH="${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          docker build -t "$IMAGE_PATH" .
+          docker push "$IMAGE_PATH"
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE_PATH="${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "$IMAGE_PATH" \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --use-http2 \
+            --allow-unauthenticated
