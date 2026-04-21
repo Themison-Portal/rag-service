@@ -52,8 +52,9 @@ jobs:
             --image "$IMAGE_PATH" \
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
-            --memory 2Gi \
-            --cpu 2 \
+            --memory 8Gi \
+            --cpu 4 \
+            --timeout 3600 \
             --use-http2 \
             --port 50051 \
             --allow-unauthenticated
