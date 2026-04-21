@@ -38,6 +38,18 @@ async def serve():
         ],
     )
 
+    # --- Self-Healing: Ensure pgvector is enabled ---
+    from rag_service.db.session import get_session
+    from sqlalchemy import text
+    try:
+        async with get_session() as session:
+            logger.info("Self-healing: Ensuring pgvector extension is enabled...")
+            await session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            await session.commit()
+            logger.info("Self-healing: pgvector extension verified.")
+    except Exception as e:
+        logger.warning(f"Self-healing: Could not enable pgvector: {e}")
+
     # Add servicer
     pb2_grpc.add_RagServiceServicer_to_server(RagServicer(), server)
 

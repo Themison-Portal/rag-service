@@ -211,14 +211,10 @@ class RagRetrievalService:
         timing_info = {"hybrid_search": True}
         hybrid_start = time.perf_counter()
 
-        vector_task = self._search_similar_chunks_docling(
+        vector_results, vector_timing = await self._search_similar_chunks_docling(
             query_text, document_id, document_name, top_k, precomputed_embedding
         )
-        bm25_task = self._search_bm25(query_text, document_id, document_name, top_k)
-
-        (vector_results, vector_timing), bm25_results = await asyncio.gather(
-            vector_task, bm25_task
-        )
+        bm25_results = await self._search_bm25(query_text, document_id, document_name, top_k)
 
         timing_info.update(vector_timing)
         timing_info["hybrid_parallel_ms"] = (time.perf_counter() - hybrid_start) * 1000
