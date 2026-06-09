@@ -20,6 +20,11 @@ service RagService {
 
   // Health check
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+
+  // Generic LLM completion. Use Query() for RAG-grounded answers; use
+  // Generate() for prompts that do not need document retrieval (wizard
+  // structured extraction, collaboration triage, classification, etc.).
+  rpc Generate(GenerateRequest) returns (GenerateResponse);
 }
 
 // =====================
@@ -177,4 +182,41 @@ message ComponentHealth {
   string name = 1;
   bool healthy = 2;
   string message = 3;
+}
+
+// =====================
+// Generate (generic LLM) Messages
+// =====================
+
+message GenerateRequest {
+  // Chat messages in order. At least one with role="user" is required.
+  repeated GenerateMessage messages = 1;
+  // Model selector: "fast" | "smart" | empty (treated as "smart" / server default).
+  string model_hint = 2;
+  // Sampling temperature. 0 = use server default.
+  double temperature = 3;
+  // Max output tokens. 0 = use server default.
+  int32 max_tokens = 4;
+  // Optional feature tag for cost attribution / logs (e.g., "wizard.extract-metadata").
+  string feature_tag = 5;
+  // JSON Schema (serialized) the model output must conform to.
+  // Empty = unstructured text response.
+  string response_schema_json = 6;
+  // Name for the JSON schema (used by some provider APIs / for logging).
+  string response_schema_name = 7;
+}
+
+message GenerateMessage {
+  // "system" | "user" | "assistant"
+  string role = 1;
+  string content = 2;
+}
+
+message GenerateResponse {
+  // Raw text or a JSON string (when response_schema_json was supplied).
+  string content = 1;
+  // Concrete model used (e.g., "claude-sonnet-4-20250514").
+  string model = 2;
+  int32 prompt_tokens = 3;
+  int32 completion_tokens = 4;
 }

@@ -1,6 +1,7 @@
 """
 gRPC Server implementation for RAG Service.
 """
+import json
 import logging
 from uuid import UUID
 
@@ -10,6 +11,7 @@ import grpc
 from gen.python.rag.v1 import rag_service_pb2 as pb2
 from gen.python.rag.v1 import rag_service_pb2_grpc as pb2_grpc
 
+from rag_service.clients.anthropic_client import generate_text
 from rag_service.db.session import get_session, check_database_connection
 from rag_service.cache.semantic_cache import SemanticCacheService
 from rag_service.services.ingestion_service import RagIngestionService
@@ -265,6 +267,62 @@ class RagServicer(pb2_grpc.RagServiceServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(e))
             return pb2.InvalidateDocumentResponse(success=False)
+
+    async def Generate(self, request, context):
+        """
+        Generic LLM completion. Use Query() for RAG-grounded answers.
+        """
+        feature_tag = request.feature_tag or "(none)"
+        logger.info(
+            "Generate called feature=%s model_hint=%s msgs=%d structured=%s",
+            feature_tag,
+            request.model_hint or "(default)",
+            len(request.messages),
+            bool(request.response_schema_json),
+        )
+
+        try:
+            messages = [
+                {"role": m.role, "content": m.content}
+                for m in request.messages
+            ]
+
+            response_schema = None
+            if request.response_schema_json:
+                try:
+                    response_schema = json.loads(request.response_schema_json)
+                except json.JSONDecodeError as e:
+                    context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                    context.set_details(f"response_schema_json is not valid JSON: {e}")
+                    return pb2.GenerateResponse()
+
+            result = await generate_text(
+                messages=messages,
+                model_hint=request.model_hint or None,
+                temperature=float(request.temperature) if request.temperature else 0.0,
+                max_tokens=int(request.max_tokens) if request.max_tokens else None,
+                response_schema=response_schema,
+                response_schema_name=request.response_schema_name or "structured_output",
+                feature_tag=feature_tag,
+            )
+
+            return pb2.GenerateResponse(
+                content=result["content"],
+                model=result["model"],
+                prompt_tokens=result["prompt_tokens"],
+                completion_tokens=result["completion_tokens"],
+            )
+
+        except ValueError as e:
+            # Surfaced from generate_text when required inputs are missing.
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details(str(e))
+            return pb2.GenerateResponse()
+        except Exception as e:
+            logger.error(f"Generate error (feature={feature_tag}): {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return pb2.GenerateResponse()
 
     async def HealthCheck(self, request, context):
         """
