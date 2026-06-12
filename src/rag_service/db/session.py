@@ -5,6 +5,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from rag_service.config import get_settings
@@ -79,7 +80,7 @@ async def check_database_connection() -> bool:
     """Check if database connection is healthy."""
     try:
         async with get_session() as session:
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
         return True
     except Exception as e:
         logger.error(f"Database connection check failed: {e}")

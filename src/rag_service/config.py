@@ -16,7 +16,15 @@ class Settings(BaseSettings):
     # Database
     database_url: str  # PostgreSQL connection (asyncpg format)
 
-    # gRPC Server
+    # Transport: "http" (default) or "grpc". main.py picks the server to
+    # start based on this. Both implementations stay in the repo so a
+    # revert is one env-var flip.
+    transport: str = "http"
+
+    # HTTP server (when transport == "http")
+    http_port: int = 8000
+
+    # gRPC Server (when transport == "grpc")
     grpc_port: int = 50051
     grpc_max_workers: int = 10
 

@@ -6,14 +6,17 @@ services:
     container_name: themison-rag-service
     restart: unless-stopped
     ports:
-      - "50051:50051"
+      - "8000:8000"
     environment:
+      # Transport — "http" (default) or "grpc"
+      TRANSPORT: "http"
+      HTTP_PORT: 8000
       # Database
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
       # API Keys (from .env file or environment)
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      # Configuration
+      # gRPC fallback config (only used when TRANSPORT=grpc)
       GRPC_PORT: 50051
       GRPC_MAX_WORKERS: 10
       HYBRID_SEARCH_ENABLED: "true"
@@ -23,7 +26,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import grpc; channel = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(channel).result(timeout=5)"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
