@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: rag-service-render
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    region: frankfurt
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GRPC_PORT
+        value: "50051"
+      - key: GRPC_MAX_WORKERS
+        value: "10"
+      - key: HYBRID_SEARCH_ENABLED
+        value: "true"
+      - key: SEMANTIC_CACHE_SIMILARITY_THRESHOLD
+        value: "0.90"
+      - key: LLM_MODEL
+        value: "claude-sonnet-4-20250514"

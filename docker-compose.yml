@@ -35,16 +35,16 @@ services:
   # PostgreSQL with pgvector extension (shared with backend)
   db:
     image: pgvector/pgvector:pg16
-    container_name: themison-db
+    container_name: themison-new-db
     restart: unless-stopped
     ports:
-      - "54322:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_DB: themison_new
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_new_data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -53,4 +53,4 @@ services:
       retries: 5
 
 volumes:
-  postgres_data:
+  postgres_new_data:
