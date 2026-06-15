@@ -37,7 +37,7 @@ _LIVE_MODEL = "claude-haiku-4-5-20251001"
 # A separate test verifies the configured key has access to *this* model,
 # not just any model — a key that authenticates fine but can't call the
 # prod model still breaks the live RAG flow.
-_PRODUCTION_MODEL = "claude-sonnet-4-20250514"
+_PRODUCTION_MODEL = "claude-sonnet-4-6"
 
 # Sentinel values set by the conftest stub or commonly used in CI
 # fixtures. If the key matches any of these, the test is skipped rather

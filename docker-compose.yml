@@ -21,7 +21,7 @@ services:
       GRPC_MAX_WORKERS: 10
       HYBRID_SEARCH_ENABLED: "true"
       SEMANTIC_CACHE_SIMILARITY_THRESHOLD: "0.90"
-      LLM_MODEL: "claude-sonnet-4-20250514"
+      LLM_MODEL: "claude-sonnet-4-6"
     depends_on:
       db:
         condition: service_healthy

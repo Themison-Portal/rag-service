@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     contextual_context_window: int = 3
 
     # LLM configuration
-    llm_model: str = "claude-sonnet-4-20250514"
+    llm_model: str = "claude-sonnet-4-6"
     llm_max_tokens: int = 2000
 
     class Config:

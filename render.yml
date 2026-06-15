@@ -21,4 +21,4 @@ services:
       - key: SEMANTIC_CACHE_SIMILARITY_THRESHOLD
         value: "0.90"
       - key: LLM_MODEL
-        value: "claude-sonnet-4-20250514"
+        value: "claude-sonnet-4-6"
