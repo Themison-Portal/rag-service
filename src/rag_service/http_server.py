@@ -10,6 +10,7 @@ JSON wire format matches the dict shape the BE's `RagClient` already returns
 to its callers — so the BE HTTP client can deserialize each response straight
 into the same dict the gRPC client yields.
 """
+import asyncio
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -29,6 +30,13 @@ from rag_service.services.ingestion_service import RagIngestionService
 from rag_service.services.retrieval_service import RagRetrievalService
 
 logger = logging.getLogger(__name__)
+
+# Serialize PDF ingestion to one document at a time. Each docling pipeline loads
+# large layout + OCR + table torch models; running several concurrently exceeds
+# the instance memory and OOM-kills the service. Concurrent/duplicate uploads
+# queue on this semaphore instead of running in parallel. This caps concurrency
+# only — no docling feature is disabled.
+_INGEST_SEMAPHORE = asyncio.Semaphore(1)
 
 
 class IngestPdfBody(BaseModel):
@@ -234,6 +242,9 @@ def create_app() -> FastAPI:
         chunk_size = body.chunk_size if body.chunk_size > 0 else 750
 
         async def event_stream():
+            # Serialize ingestion: only one docling pipeline runs at a time, so
+            # concurrent/duplicate uploads queue instead of OOM-ing the service.
+            await _INGEST_SEMAPHORE.acquire()
             try:
                 async with get_session() as session:
                     semantic_cache = SemanticCacheService(session)
@@ -278,6 +289,8 @@ def create_app() -> FastAPI:
                     },
                 }
                 yield f"data: {json.dumps(err_payload)}\n\n"
+            finally:
+                _INGEST_SEMAPHORE.release()
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
