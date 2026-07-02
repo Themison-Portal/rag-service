@@ -56,7 +56,8 @@ class Settings(BaseSettings):
 
     # LLM configuration
     llm_model: str = "claude-sonnet-4-6"
-    llm_max_tokens: int = 2000
+    # llm_max_tokens: int = 2000
+    llm_max_tokens: int = 4000
 
     class Config:
         env_file = ".env"
