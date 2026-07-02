@@ -269,7 +269,26 @@ class RagGenerationService:
             logger.info(f"[TIMING] LLM call: {timing_info['llm_call_ms']:.2f}ms")
 
             raw_content = response.content[0].text
+
+             # Diagnostic logging: capture everything needed to root-cause an
+            # empty sources array without needing to reproduce the query.
+            stop_reason = getattr(response, "stop_reason", None)
+            if stop_reason == "max_tokens":
+                logger.warning(
+                    f"[LLM_TRUNCATED] query={query_text!r} stop_reason={stop_reason} "
+                    f"raw_len={len(raw_content)}"
+                )
+
+
             parsed = self._parse_llm_json(raw_content)
+
+            if not parsed.get("sources"):
+                logger.warning(
+                    f"[EMPTY_SOURCES] query={query_text!r} stop_reason={stop_reason} "
+                    f"chunk_count={len(compressed_chunks)} "
+                    f"chunk_pages={[c.get('page') for c in compressed_chunks]} "
+                    f"raw_content_tail={raw_content[-500:]!r}"
+                )
 
             # Convert sources
             sources = []
@@ -286,6 +305,24 @@ class RagGenerationService:
                     "bboxes": bboxes,
                     "relevance": s.get("relevance", "high"),
                 })
+
+                # Safety net: if the LLM produced an answer but the sources array
+            # came back empty (JSON truncation, parse fallback, formatting
+            # slip), fall back to the chunks we actually sent it. Guarantees
+            # the Evidence Viewer always has something to show whenever real
+            # context was used.
+            if not sources and compressed_chunks:
+                logger.warning(f"[SOURCES_FALLBACK] Reconstructing sources for query={query_text!r}")
+                for chunk in compressed_chunks:
+                    bboxes = chunk.get("bboxes") or ([chunk["bbox"]] if chunk.get("bbox") else [])
+                    sources.append({
+                        "name": chunk.get("title", "Unknown"),
+                        "page": chunk.get("page", 0),
+                        "section": chunk.get("section"),
+                        "exactText": "",
+                        "bboxes": bboxes,
+                        "relevance": "high",
+                    })
 
             result = {
                 "response": parsed.get("response", ""),
