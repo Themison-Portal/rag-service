@@ -22,9 +22,15 @@ anthropic>=0.40.0
 langchain-openai>=0.2.0
 transformers>=4.36.0
 
+# # Document processing
+# docling>=2.0.0
+# langchain-docling>=0.1.0
+# langchain-core>=0.3.0
+# PyMuPDF>=1.24.0
+
 # Document processing
-docling>=2.0.0
-langchain-docling>=0.1.0
+docling==2.94.0
+langchain-docling==2.0.0
 langchain-core>=0.3.0
 PyMuPDF>=1.24.0
 
