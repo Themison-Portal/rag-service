@@ -2,6 +2,8 @@
 RAG Ingestion Service - PDF parsing, chunking, and embedding.
 """
 import logging
+import os
+import tempfile
 from datetime import datetime
 from typing import AsyncIterator, List, Optional
 from uuid import UUID, uuid4
@@ -146,12 +148,41 @@ class RagIngestionService:
 
             yield IngestionProgress("PARSING", 30, "Parsing PDF with Docling...")
 
-            loader = DoclingLoader(
-                file_path=document_url,
-                export_type=ExportType.DOC_CHUNKS,
-                chunker=HybridChunker(tokenizer=tokenizer, chunk_size=chunk_size),
-            )
-            docs = loader.load()
+            # Docling's source resolver (docling_core `_is_safe_url`) is an SSRF
+            # guard that only permits globally-routable PUBLIC IPs, so handing it
+            # an internal URL like http://backend:8080/local-files/... is
+            # rejected with "URL is not allowed". Download the bytes ourselves
+            # (httpx has no such restriction) and parse from a LOCAL file, which
+            # skips the URL guard entirely.
+            cleanup_path: Optional[str] = None
+            if document_url.startswith(("http://", "https://")):
+                async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
+                    resp = await client.get(document_url)
+                    resp.raise_for_status()
+                    pdf_bytes = resp.content
+                tmp_fd, cleanup_path = tempfile.mkstemp(suffix=".pdf")
+                os.close(tmp_fd)
+                with open(cleanup_path, "wb") as f:
+                    f.write(pdf_bytes)
+                local_path = cleanup_path
+            else:
+                # Already a local path — use as-is.
+                local_path = document_url
+
+            try:
+                loader = DoclingLoader(
+                    file_path=local_path,
+                    export_type=ExportType.DOC_CHUNKS,
+                    chunker=HybridChunker(tokenizer=tokenizer, chunk_size=chunk_size),
+                )
+                docs = loader.load()
+            finally:
+                if cleanup_path:
+                    try:
+                        os.remove(cleanup_path)
+                    except OSError:
+                        pass
+
             texts = [doc.page_content for doc in docs]
 
             yield IngestionProgress("CHUNKING", 50, f"Created {len(docs)} chunks...")
