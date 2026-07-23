@@ -177,6 +177,7 @@ class RagGenerationService:
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = 15,
         min_score: float = 0.04
     ) -> dict:
@@ -202,7 +203,8 @@ class RagGenerationService:
             semantic_start = time.perf_counter()
             cached = await self.semantic_cache_service.get_similar_response(
                 query_embedding=query_embedding,
-                document_id=document_id
+                document_id=document_id,
+                organization_id=organization_id,
             )
             timing_info["semantic_cache_search_ms"] = (time.perf_counter() - semantic_start) * 1000
 
@@ -223,6 +225,7 @@ class RagGenerationService:
             query_text=query_text,
             document_id=document_id,
             document_name=document_name,
+            organization_id=organization_id,
             top_k=top_k,
             min_score=min_score,
             precomputed_embedding=query_embedding
@@ -347,6 +350,7 @@ class RagGenerationService:
             await self.semantic_cache_service.store_response(
                 query_text=query_text,
                 query_embedding=query_embedding,
+                organization_id=organization_id,
                 document_id=document_id,
                 response=result,
                 context_hash=context_hash

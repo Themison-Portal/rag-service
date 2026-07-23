@@ -4,6 +4,7 @@ Database session management for the RAG service.
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -50,19 +51,43 @@ def _get_session_factory():
         )
     return _async_session
 
+def _reset_engine() -> None:
+    """
+    Drop cached engine/session-factory references. asyncpg connections are
+    bound to the event loop they were created in — if the engine was built
+    inside a different loop than the one now running (e.g. the self-heal
+    step's asyncio.run() before uvicorn starts its own loop), every query
+    fails with "Event loop is closed". Call this after any startup code
+    that touches the DB in a throwaway loop, so the engine gets lazily
+    rebuilt in whichever loop is actually serving requests.
+    """
+    global _engine, _async_session
+    _engine = None
+    _async_session = None
+
 
 @asynccontextmanager
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_session(
+    organization_id: Optional[str] = None,
+) -> AsyncGenerator[AsyncSession, None]:
     """
     Async context manager for database sessions.
 
+    organization_id, when provided, sets a per-transaction session variable
+    (app.current_org_id) that RLS policies can check.
+
     Usage:
-        async with get_session() as session:
+        async with get_session(organization_id=org_id) as session:
             result = await session.execute(...)
     """
     session_factory = _get_session_factory()
     session = session_factory()
     try:
+        if organization_id:
+            await session.execute(
+                text("SELECT set_config('app.current_org_id', :org_id, true)"),
+                {"org_id": str(organization_id)},
+            )
         yield session
     except Exception as e:
         await session.rollback()

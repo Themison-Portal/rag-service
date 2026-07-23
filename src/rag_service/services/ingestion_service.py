@@ -76,6 +76,7 @@ class RagIngestionService:
     async def _insert_docling_chunks(
         self,
         document_id: UUID,
+        organization_id: UUID,
         chunks: List[Document],
         embeddings: List[List[float]],
         contextual_summaries: Optional[List[str]] = None,
@@ -92,6 +93,7 @@ class RagIngestionService:
                 chunk_record = DocumentChunkDocling(
                     id=uuid4(),
                     document_id=document_id,
+                    organization_id=organization_id,
                     content=chunk.page_content,
                     page_number=citation_meta["page_number"],
                     chunk_metadata={**chunk.metadata, "chunk_index": i},
@@ -111,6 +113,7 @@ class RagIngestionService:
         self,
         document_url: str,
         document_id: UUID,
+        organization_id: UUID,
         chunk_size: int = 750,
     ) -> AsyncIterator[IngestionProgress]:
         """
@@ -197,7 +200,7 @@ class RagIngestionService:
             # Stage 5: Store in database
             yield IngestionProgress("STORING", 85, "Storing chunks in database...")
 
-            await self._insert_docling_chunks(document_id, docs, chunk_embeddings)
+            await self._insert_docling_chunks(document_id,organization_id, docs, chunk_embeddings)
 
             # Complete
             result = {

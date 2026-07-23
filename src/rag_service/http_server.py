@@ -15,6 +15,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from sqlalchemy import delete
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import StreamingResponse
@@ -28,6 +29,7 @@ from rag_service.services.generation_service import RagGenerationService
 from rag_service.services.highlighting_service import PDFHighlightService
 from rag_service.services.ingestion_service import RagIngestionService
 from rag_service.services.retrieval_service import RagRetrievalService
+from rag_service.models.chunks import DocumentChunkDocling
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,7 @@ _INGEST_SEMAPHORE = asyncio.Semaphore(1)
 class IngestPdfBody(BaseModel):
     document_url: str
     document_id: str
+    organization_id: str
     chunk_size: int = 750
 
 
@@ -64,6 +67,7 @@ class QueryBody(BaseModel):
     query: str
     document_id: str
     document_name: str
+    organization_id: str
     top_k: int = 0
     min_score: float = 0.0
 
@@ -83,6 +87,7 @@ class HighlightBody(BaseModel):
 
 class InvalidateBody(BaseModel):
     document_id: str
+    organization_id: str
 
 
 def create_app() -> FastAPI:
@@ -155,13 +160,15 @@ def create_app() -> FastAPI:
             "completion_tokens": result["completion_tokens"],
         }
 
+   
     @app.post("/v1/query")
     async def query(body: QueryBody):
-        logger.info("HTTP /query document_id=%s", body.document_id)
+        logger.info("HTTP /query document_id=%s org=%s", body.document_id, body.organization_id)
         try:
             document_id = UUID(body.document_id)
+            organization_id = UUID(body.organization_id)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"invalid document_id: {e}")
+            raise HTTPException(status_code=400, detail=f"invalid document_id/organization_id: {e}")
 
         top_k = body.top_k if body.top_k > 0 else settings.retrieval_top_k
         min_score = (
@@ -169,7 +176,7 @@ def create_app() -> FastAPI:
         )
 
         try:
-            async with get_session() as session:
+            async with get_session(organization_id=body.organization_id) as session:
                 semantic_cache = SemanticCacheService(session)
                 retrieval_service = RagRetrievalService(db=session)
                 generation_service = RagGenerationService(
@@ -180,6 +187,7 @@ def create_app() -> FastAPI:
                     query_text=body.query,
                     document_id=document_id,
                     document_name=body.document_name,
+                    organization_id=organization_id,
                     top_k=top_k,
                     min_score=min_score,
                 )
@@ -233,12 +241,12 @@ def create_app() -> FastAPI:
 
     @app.post("/v1/ingest_pdf")
     async def ingest_pdf(body: IngestPdfBody):
-        logger.info("HTTP /ingest_pdf document_id=%s", body.document_id)
+        logger.info("HTTP /ingest_pdf document_id=%s org=%s", body.document_id, body.organization_id)
         try:
             document_id = UUID(body.document_id)
+            organization_id = UUID(body.organization_id)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"invalid document_id: {e}")
-
+            raise HTTPException(status_code=400, detail=f"invalid document_id/organization_id: {e}")
         chunk_size = body.chunk_size if body.chunk_size > 0 else 750
 
         async def event_stream():
@@ -246,7 +254,7 @@ def create_app() -> FastAPI:
             # concurrent/duplicate uploads queue instead of OOM-ing the service.
             await _INGEST_SEMAPHORE.acquire()
             try:
-                async with get_session() as session:
+                async with get_session(organization_id=body.organization_id) as session:
                     semantic_cache = SemanticCacheService(session)
                     ingestion_service = RagIngestionService(
                         db=session,
@@ -255,6 +263,7 @@ def create_app() -> FastAPI:
                     async for progress in ingestion_service.ingest_pdf(
                         document_url=body.document_url,
                         document_id=document_id,
+                        organization_id=organization_id,
                         chunk_size=chunk_size,
                     ):
                         payload: Dict[str, Any] = {
@@ -312,20 +321,18 @@ def create_app() -> FastAPI:
 
     @app.post("/v1/invalidate_document")
     async def invalidate_document(body: InvalidateBody):
-        logger.info("HTTP /invalidate_document document_id=%s", body.document_id)
+        logger.info("HTTP /invalidate_document document_id=%s org=%s", body.document_id, body.organization_id)
         try:
             document_id = UUID(body.document_id)
+            organization_id = UUID(body.organization_id)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"invalid document_id: {e}")
+            raise HTTPException(status_code=400, detail=f"invalid document_id/organization_id: {e}")
 
         try:
-            async with get_session() as session:
-                from sqlalchemy import delete
-
-                from rag_service.models.chunks import DocumentChunkDocling
-
+            async with get_session(organization_id=body.organization_id) as session:
                 stmt = delete(DocumentChunkDocling).where(
-                    DocumentChunkDocling.document_id == document_id
+                    DocumentChunkDocling.document_id == document_id,
+                    DocumentChunkDocling.organization_id == organization_id,
                 )
                 res = await session.execute(stmt)
                 chunks_deleted = res.rowcount
