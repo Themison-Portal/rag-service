@@ -50,6 +50,7 @@ class RagRetrievalService:
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = 20,
         precomputed_embedding: Optional[List[float]] = None,
     ) -> Tuple[List[dict], dict]:
@@ -76,12 +77,13 @@ class RagRetrievalService:
                 1 - (pc.embedding <=> (:v)::vector) AS similarity
             FROM document_chunks_docling pc
             WHERE pc.document_id = :pid
+            AND pc.organization_id = :org_id
             ORDER BY pc.embedding <=> (:v)::vector
             LIMIT :k
         """)
 
         db_start = time.perf_counter()
-        result = await self.db.execute(sql, {"v": query_vector_str, "k": top_k, "pid": document_id})
+        result = await self.db.execute(sql, {"v": query_vector_str, "k": top_k, "pid": document_id, "org_id": organization_id})
         rows = result.fetchall()
         timing_info["db_search_ms"] = (time.perf_counter() - db_start) * 1000
 
@@ -107,6 +109,7 @@ class RagRetrievalService:
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = 20
     ) -> List[dict]:
         """
@@ -121,13 +124,14 @@ class RagRetrievalService:
                 ts_rank(pc.content_tsv, plainto_tsquery('english', :query)) AS bm25_score
             FROM document_chunks_docling pc
             WHERE pc.document_id = :pid
+              AND pc.organization_id = :org_id
               AND pc.content_tsv @@ plainto_tsquery('english', :query)
             ORDER BY bm25_score DESC
             LIMIT :k
         """)
 
         db_start = time.perf_counter()
-        result = await self.db.execute(sql, {"query": query_text, "k": top_k, "pid": document_id})
+        result = await self.db.execute(sql, {"query": query_text, "k": top_k, "pid": document_id, "org_id": organization_id})
         rows = result.fetchall()
         bm25_time = (time.perf_counter() - db_start) * 1000
 
@@ -202,6 +206,7 @@ class RagRetrievalService:
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = 20,
         precomputed_embedding: Optional[List[float]] = None,
     ) -> Tuple[List[dict], dict]:
@@ -212,9 +217,9 @@ class RagRetrievalService:
         hybrid_start = time.perf_counter()
 
         vector_results, vector_timing = await self._search_similar_chunks_docling(
-            query_text, document_id, document_name, top_k, precomputed_embedding
+            query_text, document_id, document_name,organization_id, top_k, precomputed_embedding
         )
-        bm25_results = await self._search_bm25(query_text, document_id, document_name, top_k)
+        bm25_results = await self._search_bm25(query_text, document_id, document_name, organization_id, top_k)
 
         timing_info.update(vector_timing)
         timing_info["hybrid_parallel_ms"] = (time.perf_counter() - hybrid_start) * 1000
@@ -237,6 +242,7 @@ class RagRetrievalService:
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = None,
         min_score: float = None,
         precomputed_embedding: Optional[List[float]] = None
@@ -255,12 +261,12 @@ class RagRetrievalService:
         # Use hybrid search if enabled
         if settings.hybrid_search_enabled:
             raw_chunks, search_timing = await self._search_hybrid(
-                query_text, document_id, document_name, top_k, precomputed_embedding
+                query_text, document_id, document_name,organization_id, top_k, precomputed_embedding
             )
             filtered_chunks = raw_chunks  # RRF already ranks by relevance
         else:
             raw_chunks, search_timing = await self._search_similar_chunks_docling(
-                query_text, document_id, document_name, top_k, precomputed_embedding
+                query_text, document_id, document_name,organization_id, top_k, precomputed_embedding
             )
             filtered_chunks = [d for d in raw_chunks if d["score"] >= min_score]
 

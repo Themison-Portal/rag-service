@@ -22,6 +22,7 @@ class DocumentChunkDocling(Base):
 
     id: Mapped[UUID] = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     document_id: Mapped[UUID] = Column(UUID(as_uuid=True), nullable=False)
+    organization_id: Mapped[UUID] = Column(UUID(as_uuid=True), nullable=False)
     content: Mapped[str] = Column(Text, nullable=False)
     page_number: Mapped[int] = Column(Integer, nullable=True)
     chunk_metadata: Mapped[Dict] = Column("chunk_metadata", JSON)
@@ -46,6 +47,7 @@ class DocumentChunkDocling(Base):
             postgresql_ops={'embedding': 'vector_cosine_ops'}
         ),
         Index('idx_chunks_document_id', 'document_id'),
+        Index('idx_chunks_organization_id', 'organization_id'),
         Index('idx_chunks_content_gin', 'content_tsv', postgresql_using='gin'),
         Index(
             'idx_chunks_embedding_large_hnsw',

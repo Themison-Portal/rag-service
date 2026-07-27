@@ -10,7 +10,9 @@ import logging
 import os
 import signal
 import sys
+import uvicorn
 from concurrent import futures
+from rag_service.db.session import _reset_engine
 
 from rag_service.config import get_settings
 
@@ -42,12 +44,12 @@ def _self_heal_pgvector_sync() -> None:
 
 def run_http() -> None:
     """Run the FastAPI HTTP server via uvicorn."""
-    import uvicorn
 
     settings = get_settings()
     # Cloud Run / Render set $PORT — honour it if present.
     port = int(os.environ.get("PORT") or settings.http_port)
     _self_heal_pgvector_sync()
+    _reset_engine()
     logger.info(f"Starting RAG Service (HTTP) on 0.0.0.0:{port}")
     uvicorn.run(
         "rag_service.http_server:app",
@@ -86,6 +88,8 @@ async def _serve_grpc() -> None:
             await session.commit()
     except Exception as e:
         logger.warning(f"Self-healing: Could not enable pgvector: {e}")
+
+    _reset_engine()
 
     pb2_grpc.add_RagServiceServicer_to_server(RagServicer(), server)
     SERVICE_NAMES = (

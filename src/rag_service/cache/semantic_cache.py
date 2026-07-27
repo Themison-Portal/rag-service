@@ -56,13 +56,15 @@ class SemanticCacheService:
         self,
         query_embedding: List[float],
         document_id: UUID,
+        organization_id: UUID,
         similarity_threshold: float = None
     ) -> Optional[Dict]:
         """
         Search for semantically similar cached response.
 
-        Uses pgvector cosine similarity with HNSW index.
-        Returns highest similarity match above threshold, or None.
+        Scoped by document_id AND organization_id — both are required so a
+        cache hit can never cross a tenant boundary, independent of whether
+        the underlying document_id happens to match.
         """
         threshold = similarity_threshold or self.similarity_threshold
         search_start = time.perf_counter()
@@ -78,6 +80,7 @@ class SemanticCacheService:
                 1 - (query_embedding <=> (:v)::vector) AS similarity
             FROM semantic_cache_responses
             WHERE document_id = :doc_id
+              AND organization_id = :org_id
               AND 1 - (query_embedding <=> (:v)::vector) >= :threshold
             ORDER BY query_embedding <=> (:v)::vector
             LIMIT 1
@@ -87,6 +90,7 @@ class SemanticCacheService:
             result = await self.db.execute(sql, {
                 "v": query_vector,
                 "doc_id": document_id,
+                "org_id": organization_id,
                 "threshold": threshold
             })
             row = result.fetchone()
@@ -139,6 +143,7 @@ class SemanticCacheService:
         query_text: str,
         query_embedding: List[float],
         document_id: UUID,
+        organization_id: UUID,
         response: Dict,
         context_hash: str
     ) -> None:
@@ -150,6 +155,7 @@ class SemanticCacheService:
                 query_text=query_text,
                 query_embedding=query_embedding,
                 document_id=document_id,
+                organization_id=organization_id,
                 response_data=response,
                 context_hash=context_hash,
                 hit_count=0,
@@ -167,14 +173,15 @@ class SemanticCacheService:
             await self.db.rollback()
             logger.error(f"[SEMANTIC_CACHE] Store error: {e}")
 
-    async def invalidate_document(self, document_id: UUID) -> int:
-        """Delete all cache entries for a document."""
+    async def invalidate_document(self, document_id: UUID, organization_id: Optional[UUID] = None) -> int:
+        """Delete all cache entries for a document, optionally scoped to an org."""
         invalidate_start = time.perf_counter()
 
         try:
-            stmt = delete(SemanticCacheResponse).where(
-                SemanticCacheResponse.document_id == document_id
-            )
+            conditions = [SemanticCacheResponse.document_id == document_id]
+            if organization_id:
+                conditions.append(SemanticCacheResponse.organization_id == organization_id)
+            stmt = delete(SemanticCacheResponse).where(*conditions)
             result = await self.db.execute(stmt)
             await self.db.commit()
 
