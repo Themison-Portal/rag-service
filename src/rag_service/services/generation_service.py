@@ -1,6 +1,7 @@
 """
 RAG Generation Service - LLM answer generation with caching.
 """
+
 import json
 import logging
 import re
@@ -54,7 +55,12 @@ class RagGenerationService:
             if prov:
                 raw_bbox = prov[0].get("bbox")
                 if isinstance(raw_bbox, dict):
-                    bbox = [raw_bbox.get("l"), raw_bbox.get("t"), raw_bbox.get("r"), raw_bbox.get("b")]
+                    bbox = [
+                        raw_bbox.get("l"),
+                        raw_bbox.get("t"),
+                        raw_bbox.get("r"),
+                        raw_bbox.get("b"),
+                    ]
                 else:
                     bbox = raw_bbox
 
@@ -93,14 +99,16 @@ class RagGenerationService:
                 all_content = "\n...\n".join(m["content"] for m in group)
                 section = next((m["section"] for m in group if m["section"]), None)
 
-                compressed.append({
-                    "title": title,
-                    "page": page,
-                    "section": section,
-                    "bboxes": all_bboxes,
-                    "content": all_content[:2000],
-                    "merged_count": len(group),
-                })
+                compressed.append(
+                    {
+                        "title": title,
+                        "page": page,
+                        "section": section,
+                        "bboxes": all_bboxes,
+                        "content": all_content[:2000],
+                        "merged_count": len(group),
+                    }
+                )
 
         logger.info(f"[COMPRESSION] {len(chunks)} chunks -> {len(compressed)} compressed")
         return compressed
@@ -121,12 +129,12 @@ class RagGenerationService:
     def _repair_json(self, json_str: str) -> str:
         """Attempt to repair common JSON formatting issues."""
         repaired = json_str
-        repaired = re.sub(r'(?<!\\)\n(?=(?:[^"]*"[^"]*")*[^"]*"[^"]*$)', '\\n', repaired)
-        repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
-        repaired = re.sub(r'(\})\s*(")', r'\1,\2', repaired)
-        repaired = re.sub(r'(\])\s*(")', r'\1,\2', repaired)
-        repaired = re.sub(r'(")\s+(")', r'\1,\2', repaired)
-        repaired = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', repaired)
+        repaired = re.sub(r'(?<!\\)\n(?=(?:[^"]*"[^"]*")*[^"]*"[^"]*$)', "\\n", repaired)
+        repaired = re.sub(r",(\s*[}\]])", r"\1", repaired)
+        repaired = re.sub(r'(\})\s*(")', r"\1,\2", repaired)
+        repaired = re.sub(r'(\])\s*(")', r"\1,\2", repaired)
+        repaired = re.sub(r'(")\s+(")', r"\1,\2", repaired)
+        repaired = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", repaired)
         return repaired
 
     def _parse_llm_json(self, raw_content: str) -> dict:
@@ -138,7 +146,7 @@ class RagGenerationService:
             pass
 
         # Strategy 2: Extract JSON with regex
-        json_match = re.search(r'\{[\s\S]*\}', raw_content)
+        json_match = re.search(r"\{[\s\S]*\}", raw_content)
         if json_match:
             json_str = json_match.group()
             try:
@@ -157,20 +165,45 @@ class RagGenerationService:
         response_match = re.search(r'"response"\s*:\s*"((?:[^"\\]|\\.)*)"\s*[,}]', raw_content)
         if response_match:
             return {
-                "response": response_match.group(1).replace('\\"', '"').replace('\\n', '\n'),
-                "sources": []
+                "response": response_match.group(1).replace('\\"', '"').replace("\\n", "\n"),
+                "sources": [],
             }
 
         # Strategy 5: Return raw content
         clean_content = raw_content
-        clean_content = re.sub(r'^\s*\{?\s*"response"\s*:\s*"?', '', clean_content)
-        clean_content = re.sub(r'"?\s*,?\s*"sources"\s*:.*$', '', clean_content, flags=re.DOTALL)
+        clean_content = re.sub(r'^\s*\{?\s*"response"\s*:\s*"?', "", clean_content)
+        clean_content = re.sub(r'"?\s*,?\s*"sources"\s*:.*$', "", clean_content, flags=re.DOTALL)
         clean_content = clean_content.strip().strip('"').strip()
 
         return {
-            "response": clean_content[:3000] if clean_content else "Unable to parse response from AI.",
-            "sources": []
+            "response": (
+                clean_content[:3000] if clean_content else "Unable to parse response from AI."
+            ),
+            "sources": [],
         }
+
+    def _log_query_trace(
+        self,
+        query_text: str,
+        compressed_chunks: list,
+        formatted_context: str,
+        result: dict,
+        timing_info: dict,
+    ) -> None:
+        """Single structured log line per query - full trace for debugging/eval."""
+        trace = {
+            "event": "rag_query_trace",
+            "query": query_text,
+            "retrieved_chunks": [
+                {"title": c.get("title"), "page": c.get("page"), "section": c.get("section")}
+                for c in compressed_chunks
+            ],
+            "context_char_count": len(formatted_context),
+            "response": result.get("response", ""),
+            "sources": result.get("sources", []),
+            "timing": timing_info,
+        }
+        logger.info(json.dumps(trace, default=str))
 
     async def generate_answer(
         self,
@@ -179,7 +212,7 @@ class RagGenerationService:
         document_name: str,
         organization_id: UUID,
         top_k: int = 15,
-        min_score: float = 0.04
+        min_score: float = 0.04,
     ) -> dict:
         """
         Generate answer with timing information.
@@ -213,12 +246,13 @@ class RagGenerationService:
                 timing_info["semantic_cache_similarity"] = cached["similarity"]
                 timing_info["generation_total_ms"] = (time.perf_counter() - generation_start) * 1000
 
-                logger.info(f"[TIMING] Semantic cache HIT: {timing_info['generation_total_ms']:.2f}ms")
+                logger.info(
+                    f"[TIMING] Semantic cache HIT: {timing_info['generation_total_ms']:.2f}ms"
+                )
 
-                return {
-                    "result": cached["response"],
-                    "timing": timing_info
-                }
+                self._log_query_trace(query_text, [], "", cached["response"], timing_info)
+
+                return {"result": cached["response"], "timing": timing_info}
 
         # 3. Retrieve chunks
         filtered_chunks, retrieval_timing = await self.retrieval_service.retrieve_similar_chunks(
@@ -228,20 +262,19 @@ class RagGenerationService:
             organization_id=organization_id,
             top_k=top_k,
             min_score=min_score,
-            precomputed_embedding=query_embedding
+            precomputed_embedding=query_embedding,
         )
         timing_info["retrieval"] = retrieval_timing
         timing_info["original_chunk_count"] = len(filtered_chunks)
 
         if not filtered_chunks:
             timing_info["generation_total_ms"] = (time.perf_counter() - generation_start) * 1000
-            return {
-                "result": {
-                    "response": "The provided documents do not contain this information.",
-                    "sources": []
-                },
-                "timing": timing_info
+            empty_result = {
+                "response": "The provided documents do not contain this information.",
+                "sources": [],
             }
+            self._log_query_trace(query_text, [], "", empty_result, timing_info)
+            return {"result": empty_result, "timing": timing_info}
 
         # 4. Compress chunks
         compression_start = time.perf_counter()
@@ -251,9 +284,9 @@ class RagGenerationService:
         timing_info["chunks_compressed"] = len(compressed_chunks) < len(filtered_chunks)
 
         # 5. Format context
-        formatted_context = "\n\n".join([
-            self._format_context_compact(chunk) for chunk in compressed_chunks
-        ])
+        formatted_context = "\n\n".join(
+            [self._format_context_compact(chunk) for chunk in compressed_chunks]
+        )
 
         # 6. Call Claude
         llm_start = time.perf_counter()
@@ -273,7 +306,7 @@ class RagGenerationService:
 
             raw_content = response.content[0].text
 
-             # Diagnostic logging: capture everything needed to root-cause an
+            # Diagnostic logging: capture everything needed to root-cause an
             # empty sources array without needing to reproduce the query.
             stop_reason = getattr(response, "stop_reason", None)
             if stop_reason == "max_tokens":
@@ -281,7 +314,6 @@ class RagGenerationService:
                     f"[LLM_TRUNCATED] query={query_text!r} stop_reason={stop_reason} "
                     f"raw_len={len(raw_content)}"
                 )
-
 
             parsed = self._parse_llm_json(raw_content)
 
@@ -300,14 +332,16 @@ class RagGenerationService:
                 if bboxes and not isinstance(bboxes[0], list):
                     bboxes = [bboxes]
 
-                sources.append({
-                    "name": s.get("name", s.get("protocol", "Unknown")),
-                    "page": s.get("page", 0),
-                    "section": s.get("section"),
-                    "exactText": s.get("exactText", ""),
-                    "bboxes": bboxes,
-                    "relevance": s.get("relevance", "high"),
-                })
+                sources.append(
+                    {
+                        "name": s.get("name", s.get("protocol", "Unknown")),
+                        "page": s.get("page", 0),
+                        "section": s.get("section"),
+                        "exactText": s.get("exactText", ""),
+                        "bboxes": bboxes,
+                        "relevance": s.get("relevance", "high"),
+                    }
+                )
 
                 # Safety net: if the LLM produced an answer but the sources array
             # came back empty (JSON truncation, parse fallback, formatting
@@ -315,17 +349,21 @@ class RagGenerationService:
             # the Evidence Viewer always has something to show whenever real
             # context was used.
             if not sources and compressed_chunks:
-                logger.warning(f"[SOURCES_FALLBACK] Reconstructing sources for query={query_text!r}")
+                logger.warning(
+                    f"[SOURCES_FALLBACK] Reconstructing sources for query={query_text!r}"
+                )
                 for chunk in compressed_chunks:
                     bboxes = chunk.get("bboxes") or ([chunk["bbox"]] if chunk.get("bbox") else [])
-                    sources.append({
-                        "name": chunk.get("title", "Unknown"),
-                        "page": chunk.get("page", 0),
-                        "section": chunk.get("section"),
-                        "exactText": "",
-                        "bboxes": bboxes,
-                        "relevance": "high",
-                    })
+                    sources.append(
+                        {
+                            "name": chunk.get("title", "Unknown"),
+                            "page": chunk.get("page", 0),
+                            "section": chunk.get("section"),
+                            "exactText": "",
+                            "bboxes": bboxes,
+                            "relevance": "high",
+                        }
+                    )
 
             result = {
                 "response": parsed.get("response", ""),
@@ -337,11 +375,8 @@ class RagGenerationService:
             timing_info["llm_call_ms"] = (time.perf_counter() - llm_start) * 1000
             timing_info["error"] = str(e)
             return {
-                "result": {
-                    "response": f"Error generating response: {str(e)}",
-                    "sources": []
-                },
-                "timing": timing_info
+                "result": {"response": f"Error generating response: {str(e)}", "sources": []},
+                "timing": timing_info,
             }
 
         # 7. Store in semantic cache
@@ -353,13 +388,12 @@ class RagGenerationService:
                 organization_id=organization_id,
                 document_id=document_id,
                 response=result,
-                context_hash=context_hash
+                context_hash=context_hash,
             )
 
         timing_info["generation_total_ms"] = (time.perf_counter() - generation_start) * 1000
         logger.info(f"[TIMING] Generation complete: {timing_info['generation_total_ms']:.2f}ms")
 
-        return {
-            "result": result,
-            "timing": timing_info
-        }
+        self._log_query_trace(query_text, compressed_chunks, formatted_context, result, timing_info)
+
+        return {"result": result, "timing": timing_info}
