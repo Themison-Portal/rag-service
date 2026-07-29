@@ -1,7 +1,25 @@
 """
 RAG Generation Service - LLM answer generation with caching.
+
+Changes in this revision (Step 2 of the RAG Development Plan, plus
+logging follow-ups agreed alongside it):
+  - Added explicit grounding rule to SYSTEM_PROMPT: don't guess/fill gaps
+    with general knowledge when context is insufficient.
+  - Added explicit relevance-scoring instruction to SYSTEM_PROMPT: the
+    "relevance" field was previously just an unexplained example value
+    in the schema ("relevance": "high"), which the model was echoing
+    verbatim on every source regardless of actual relevance. Now it's
+    told what the levels mean and to vary it accordingly.
+  - Added SYSTEM_PROMPT_VERSION (hash of the prompt text) so trace logs
+    can be tied to exactly which prompt version produced them.
+  - Chunk scores now flow through _extract_chunk_metadata and
+    _compress_chunks so _log_query_trace can surface per-chunk score
+    (or scores, when chunks were merged) - needed to verify the
+    confidence filter fix in retrieval_service.py is dropping the
+    right chunks.
 """
 
+import hashlib
 import json
 import logging
 import re
@@ -22,12 +40,19 @@ SYSTEM_PROMPT = """You are an expert clinical Document assistant. You MUST respo
 
 RULES:
 - Use ONLY the provided context
+- If the context does not contain enough information to answer confidently, say so explicitly
+  instead of guessing or filling the gap with general knowledge.
 - Every fact MUST have an inline citation: (Document_Title, p. X)
 - Include bbox coordinates from context in your sources
 - If multiple chunks from same page, include ALL their bboxes
+- Set "relevance" on each source based on how directly it answers the question: "high" if it
+  directly answers the question, "medium" if it provides supporting or related context, "low"
+  if it is only tangentially related. Do not default every source to "high".
 
 RESPOND WITH THIS EXACT JSON STRUCTURE (no other text):
 {"response": "markdown answer with citations", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
+
+SYSTEM_PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 
 
 class RagGenerationService:
@@ -75,6 +100,7 @@ class RagGenerationService:
             "section": section,
             "bbox": bbox,
             "content": doc.get("page_content", ""),
+            "score": doc.get("score"),
         }
 
     def _compress_chunks(self, chunks: List[dict]) -> List[dict]:
@@ -98,6 +124,7 @@ class RagGenerationService:
                 all_bboxes = [m["bbox"] for m in group if m["bbox"]]
                 all_content = "\n...\n".join(m["content"] for m in group)
                 section = next((m["section"] for m in group if m["section"]), None)
+                all_scores = [m["score"] for m in group if m.get("score") is not None]
 
                 compressed.append(
                     {
@@ -107,6 +134,7 @@ class RagGenerationService:
                         "bboxes": all_bboxes,
                         "content": all_content[:2000],
                         "merged_count": len(group),
+                        "scores": all_scores,
                     }
                 )
 
@@ -185,7 +213,7 @@ class RagGenerationService:
     def _log_query_trace(
         self,
         query_text: str,
-        compressed_chunks: list,
+        compressed_chunks: List[dict],
         formatted_context: str,
         result: dict,
         timing_info: dict,
@@ -194,8 +222,15 @@ class RagGenerationService:
         trace = {
             "event": "rag_query_trace",
             "query": query_text,
+            "system_prompt_version": SYSTEM_PROMPT_VERSION,
             "retrieved_chunks": [
-                {"title": c.get("title"), "page": c.get("page"), "section": c.get("section")}
+                {
+                    "title": c.get("title"),
+                    "page": c.get("page"),
+                    "section": c.get("section"),
+                    "score": c.get("score"),
+                    "scores": c.get("scores"),
+                }
                 for c in compressed_chunks
             ],
             "context_char_count": len(formatted_context),

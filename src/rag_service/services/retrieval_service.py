@@ -1,6 +1,7 @@
 """
 RAG Retrieval Service - Vector search and hybrid retrieval.
 """
+
 import asyncio
 import logging
 import time
@@ -83,11 +84,15 @@ class RagRetrievalService:
         """)
 
         db_start = time.perf_counter()
-        result = await self.db.execute(sql, {"v": query_vector_str, "k": top_k, "pid": document_id, "org_id": organization_id})
+        result = await self.db.execute(
+            sql, {"v": query_vector_str, "k": top_k, "pid": document_id, "org_id": organization_id}
+        )
         rows = result.fetchall()
         timing_info["db_search_ms"] = (time.perf_counter() - db_start) * 1000
 
-        logger.info(f"[TIMING] Vector search: {timing_info['db_search_ms']:.2f}ms, found {len(rows)} chunks")
+        logger.info(
+            f"[TIMING] Vector search: {timing_info['db_search_ms']:.2f}ms, found {len(rows)} chunks"
+        )
 
         docs = [
             {
@@ -110,7 +115,7 @@ class RagRetrievalService:
         document_id: UUID,
         document_name: str,
         organization_id: UUID,
-        top_k: int = 20
+        top_k: int = 20,
     ) -> List[dict]:
         """
         Full-text BM25 search using PostgreSQL tsvector.
@@ -131,7 +136,9 @@ class RagRetrievalService:
         """)
 
         db_start = time.perf_counter()
-        result = await self.db.execute(sql, {"query": query_text, "k": top_k, "pid": document_id, "org_id": organization_id})
+        result = await self.db.execute(
+            sql, {"query": query_text, "k": top_k, "pid": document_id, "org_id": organization_id}
+        )
         rows = result.fetchall()
         bm25_time = (time.perf_counter() - db_start) * 1000
 
@@ -153,10 +160,7 @@ class RagRetrievalService:
         return docs
 
     def _reciprocal_rank_fusion(
-        self,
-        vector_results: List[dict],
-        bm25_results: List[dict],
-        k: int = 60
+        self, vector_results: List[dict], bm25_results: List[dict], k: int = 60
     ) -> List[dict]:
         """
         Combine vector and BM25 results using Reciprocal Rank Fusion (RRF).
@@ -198,8 +202,49 @@ class RagRetrievalService:
             doc["rrf_score"] = rrf_scores[doc_id]
             fused_results.append(doc)
 
-        logger.info(f"[HYBRID] RRF fusion: {len(vector_results)} vector + {len(bm25_results)} BM25 -> {len(fused_results)} merged")
+        logger.info(
+            f"[HYBRID] RRF fusion: {len(vector_results)} vector + {len(bm25_results)} BM25 -> {len(fused_results)} merged"
+        )
         return fused_results
+
+    def _apply_confidence_filter(self, chunks: list, min_score: float) -> tuple:
+        """
+        STEP 2 FIX: filters out weak matches. RRF's fused score isn't
+        comparable to min_score (different scale - RRF is a rank-based
+        fraction, min_score was calibrated for raw cosine similarity), so
+        this filters on the underlying vector_score preserved per chunk
+        by _reciprocal_rank_fusion instead.
+
+        Chunks with no vector_score (BM25-only exact keyword matches) are
+        kept regardless of threshold - an exact term match is itself a
+        relevance signal that a cosine-similarity threshold doesn't apply to.
+        """
+        kept, dropped = [], []
+        for c in chunks:
+            vector_score = c.get("vector_score")
+            if vector_score is None or vector_score >= min_score:
+                kept.append(c)
+            else:
+                dropped.append(c)
+
+        if dropped:
+            logger.info(
+                f"[CONFIDENCE_FILTER] dropped {len(dropped)}/{len(chunks)} chunks "
+                f"below min_score={min_score} "
+                f"(dropped vector_scores={[round(c.get('vector_score', 0), 4) for c in dropped]})"
+            )
+
+        return kept, {
+            "confidence_filter_applied": True,
+            "confidence_filter_threshold": min_score,
+            "confidence_filter_input_count": len(chunks),
+            "confidence_filter_kept_count": len(kept),
+            "confidence_filter_dropped_count": len(dropped),
+            "confidence_filter_kept_scores": [round(c.get("vector_score", 0), 4) for c in kept],
+            "confidence_filter_dropped_scores": [
+                round(c.get("vector_score", 0), 4) for c in dropped
+            ],
+        }
 
     async def _search_hybrid(
         self,
@@ -217,9 +262,11 @@ class RagRetrievalService:
         hybrid_start = time.perf_counter()
 
         vector_results, vector_timing = await self._search_similar_chunks_docling(
-            query_text, document_id, document_name,organization_id, top_k, precomputed_embedding
+            query_text, document_id, document_name, organization_id, top_k, precomputed_embedding
         )
-        bm25_results = await self._search_bm25(query_text, document_id, document_name, organization_id, top_k)
+        bm25_results = await self._search_bm25(
+            query_text, document_id, document_name, organization_id, top_k
+        )
 
         timing_info.update(vector_timing)
         timing_info["hybrid_parallel_ms"] = (time.perf_counter() - hybrid_start) * 1000
@@ -245,7 +292,7 @@ class RagRetrievalService:
         organization_id: UUID,
         top_k: int = None,
         min_score: float = None,
-        precomputed_embedding: Optional[List[float]] = None
+        precomputed_embedding: Optional[List[float]] = None,
     ) -> Tuple[List[dict], dict]:
         """
         Retrieve and format top similar chunks for a query.
@@ -261,18 +308,31 @@ class RagRetrievalService:
         # Use hybrid search if enabled
         if settings.hybrid_search_enabled:
             raw_chunks, search_timing = await self._search_hybrid(
-                query_text, document_id, document_name,organization_id, top_k, precomputed_embedding
+                query_text,
+                document_id,
+                document_name,
+                organization_id,
+                top_k,
+                precomputed_embedding,
             )
-            filtered_chunks = raw_chunks  # RRF already ranks by relevance
+            filtered_chunks, filter_info = self._apply_confidence_filter(raw_chunks, min_score)
+            timing_info.update(filter_info)
         else:
             raw_chunks, search_timing = await self._search_similar_chunks_docling(
-                query_text, document_id, document_name,organization_id, top_k, precomputed_embedding
+                query_text,
+                document_id,
+                document_name,
+                organization_id,
+                top_k,
+                precomputed_embedding,
             )
             filtered_chunks = [d for d in raw_chunks if d["score"] >= min_score]
 
         timing_info.update(search_timing)
         timing_info["retrieval_total_ms"] = (time.perf_counter() - retrieval_start) * 1000
 
-        logger.info(f"[TIMING] Retrieval total: {timing_info['retrieval_total_ms']:.2f}ms, {len(filtered_chunks)} chunks")
+        logger.info(
+            f"[TIMING] Retrieval total: {timing_info['retrieval_total_ms']:.2f}ms, {len(filtered_chunks)} chunks"
+        )
 
         return filtered_chunks, timing_info
