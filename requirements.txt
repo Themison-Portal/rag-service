@@ -21,7 +21,7 @@ openai>=1.54.0
 anthropic>=0.40.0
 langchain-openai>=0.2.0
 transformers>=4.36.0
-
+cohere>=5.0.0
 # # Document processing
 # docling>=2.0.0
 # langchain-docling>=0.1.0

@@ -253,7 +253,7 @@ class RagGenerationService:
         document_id: UUID,
         document_name: str,
         organization_id: UUID,
-        top_k: int = 15,
+        top_k: int = None,
         min_score: float = 0.04,
     ) -> dict:
         """

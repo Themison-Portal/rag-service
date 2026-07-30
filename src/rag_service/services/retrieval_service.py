@@ -10,6 +10,7 @@ from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from rag_service.services.reranker import RerankerService
 
 from rag_service.clients.openai_client import get_embedding_client
 from rag_service.config import get_settings
@@ -27,6 +28,7 @@ class RagRetrievalService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.embedding_client = get_embedding_client()
+        self.reranker = RerankerService()
 
     def _embedding_to_pg_vector(self, emb: List[float]) -> str:
         """Convert Python list of floats to PostgreSQL vector format."""
@@ -324,7 +326,7 @@ class RagRetrievalService:
             f"[HYBRID] Search complete: {len(fused_results)} results in {timing_info['hybrid_parallel_ms']:.2f}ms"
         )
 
-        return fused_results[:top_k], timing_info
+        return fused_results, timing_info
 
     async def retrieve_similar_chunks(
         self,
@@ -338,11 +340,20 @@ class RagRetrievalService:
     ) -> Tuple[List[dict], dict]:
         """
         Retrieve and format top similar chunks for a query.
+
+        top_k here is the FINAL number of chunks returned (post-rerank).
+        Internally, fetch_k (settings.retrieval_fetch_k, wider than top_k)
+        controls how many candidates are pulled before reranking trims
+        them down - "retrieve wide, rerank to the top few" (Step 4).
         """
         if top_k is None:
-            top_k = settings.retrieval_top_k
+            top_k = (
+                settings.reranker_top_k if settings.reranker_enabled else settings.retrieval_top_k
+            )
         if min_score is None:
             min_score = settings.retrieval_min_score
+
+        fetch_k = max(settings.retrieval_fetch_k, top_k)
 
         retrieval_start = time.perf_counter()
         timing_info = {"chunk_cache_hit": False}
@@ -354,7 +365,7 @@ class RagRetrievalService:
                 document_id,
                 document_name,
                 organization_id,
-                top_k,
+                fetch_k,
                 precomputed_embedding,
             )
             filtered_chunks, filter_info = self._apply_confidence_filter(
@@ -367,16 +378,26 @@ class RagRetrievalService:
                 document_id,
                 document_name,
                 organization_id,
-                top_k,
+                fetch_k,
                 precomputed_embedding,
             )
             filtered_chunks = [d for d in raw_chunks if d["score"] >= min_score]
 
         timing_info.update(search_timing)
+
+        # STEP 4: rerank the confidence-filtered candidates down to top_k.
+        reranked_chunks, rerank_timing = await self.reranker.rerank(
+            query_text=query_text,
+            chunks=filtered_chunks,
+            top_n=top_k,
+        )
+        timing_info.update(rerank_timing)
+
         timing_info["retrieval_total_ms"] = (time.perf_counter() - retrieval_start) * 1000
 
         logger.info(
-            f"[TIMING] Retrieval total: {timing_info['retrieval_total_ms']:.2f}ms, {len(filtered_chunks)} chunks"
+            f"[TIMING] Retrieval total: {timing_info['retrieval_total_ms']:.2f}ms, "
+            f"{len(reranked_chunks)} chunks after filter+rerank"
         )
 
-        return filtered_chunks, timing_info
+        return reranked_chunks, timing_info

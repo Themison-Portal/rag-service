@@ -10,6 +10,7 @@ JSON wire format matches the dict shape the BE's `RagClient` already returns
 to its callers — so the BE HTTP client can deserialize each response straight
 into the same dict the gRPC client yields.
 """
+
 import asyncio
 import json
 import logging
@@ -160,7 +161,6 @@ def create_app() -> FastAPI:
             "completion_tokens": result["completion_tokens"],
         }
 
-   
     @app.post("/v1/query")
     async def query(body: QueryBody):
         logger.info("HTTP /query document_id=%s org=%s", body.document_id, body.organization_id)
@@ -170,10 +170,8 @@ def create_app() -> FastAPI:
         except ValueError as e:
             raise HTTPException(status_code=400, detail=f"invalid document_id/organization_id: {e}")
 
-        top_k = body.top_k if body.top_k > 0 else settings.retrieval_top_k
-        min_score = (
-            body.min_score if body.min_score > 0 else settings.retrieval_min_score
-        )
+        top_k = body.top_k if body.top_k > 0 else None
+        min_score = body.min_score if body.min_score > 0 else settings.retrieval_min_score
 
         try:
             async with get_session(organization_id=body.organization_id) as session:
@@ -233,15 +231,15 @@ def create_app() -> FastAPI:
                 "semantic_cache_hit": timing_data.get("semantic_cache_hit", False),
                 "chunk_cache_hit": retrieval.get("chunk_cache_hit", False),
                 "response_cache_hit": timing_data.get("response_cache_hit", False),
-                "semantic_cache_similarity": timing_data.get(
-                    "semantic_cache_similarity", 0
-                ),
+                "semantic_cache_similarity": timing_data.get("semantic_cache_similarity", 0),
             },
         }
 
     @app.post("/v1/ingest_pdf")
     async def ingest_pdf(body: IngestPdfBody):
-        logger.info("HTTP /ingest_pdf document_id=%s org=%s", body.document_id, body.organization_id)
+        logger.info(
+            "HTTP /ingest_pdf document_id=%s org=%s", body.document_id, body.organization_id
+        )
         try:
             document_id = UUID(body.document_id)
             organization_id = UUID(body.organization_id)
@@ -321,7 +319,11 @@ def create_app() -> FastAPI:
 
     @app.post("/v1/invalidate_document")
     async def invalidate_document(body: InvalidateBody):
-        logger.info("HTTP /invalidate_document document_id=%s org=%s", body.document_id, body.organization_id)
+        logger.info(
+            "HTTP /invalidate_document document_id=%s org=%s",
+            body.document_id,
+            body.organization_id,
+        )
         try:
             document_id = UUID(body.document_id)
             organization_id = UUID(body.organization_id)
