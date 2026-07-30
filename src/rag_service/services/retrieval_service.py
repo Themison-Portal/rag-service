@@ -207,43 +207,85 @@ class RagRetrievalService:
         )
         return fused_results
 
-    def _apply_confidence_filter(self, chunks: list, min_score: float) -> tuple:
+    def _apply_confidence_filter(
+        self, chunks: list, min_score: float, min_bm25_score: float = None
+    ) -> tuple:
         """
-        STEP 2 FIX: filters out weak matches. RRF's fused score isn't
-        comparable to min_score (different scale - RRF is a rank-based
-        fraction, min_score was calibrated for raw cosine similarity), so
-        this filters on the underlying vector_score preserved per chunk
-        by _reciprocal_rank_fusion instead.
+        STEP 2 FIX (vector) + STEP 2b (bm25): filters out weak matches.
 
-        Chunks with no vector_score (BM25-only exact keyword matches) are
-        kept regardless of threshold - an exact term match is itself a
-        relevance signal that a cosine-similarity threshold doesn't apply to.
+        Vector-sourced chunks: filtered on vector_score (real cosine similarity,
+        min_score is calibrated against this scale).
+
+        BM25-only chunks (no vector_score - keyword match the vector search
+        missed): ts_rank isn't on a comparable scale to min_score, so it's
+        min-max normalized within this result set first, then compared to
+        min_bm25_score. If min_bm25_score is None (not yet empirically
+        derived), BM25-only chunks are kept and just logged, not dropped -
+        this is intentional "observe mode" until real score distributions
+        are reviewed and a defensible threshold is set, the same way
+        min_score was validated against real vector_score data.
         """
+        # Normalize BM25 scores within this result set first.
+        bm25_vals = [c.get("bm25_score") for c in chunks if c.get("bm25_score") is not None]
+        if bm25_vals:
+            max_v, min_v = max(bm25_vals), min(bm25_vals)
+            range_v = max_v - min_v or 1e-9
+            for c in chunks:
+                if c.get("bm25_score") is not None:
+                    c["bm25_score_normalized"] = (c["bm25_score"] - min_v) / range_v
+
         kept, dropped = [], []
         for c in chunks:
             vector_score = c.get("vector_score")
-            if vector_score is None or vector_score >= min_score:
-                kept.append(c)
+            bm25_norm = c.get("bm25_score_normalized")
+
+            if vector_score is not None:
+                passes = vector_score >= min_score
+            elif bm25_norm is not None and min_bm25_score is not None:
+                passes = bm25_norm >= min_bm25_score
             else:
-                dropped.append(c)
+                # No vector score, and either no BM25 score or no threshold
+                # set yet - can't responsibly drop something we can't score.
+                passes = True
+
+            (kept if passes else dropped).append(c)
 
         if dropped:
             logger.info(
                 f"[CONFIDENCE_FILTER] dropped {len(dropped)}/{len(chunks)} chunks "
-                f"below min_score={min_score} "
-                f"(dropped vector_scores={[round(c.get('vector_score', 0), 4) for c in dropped]})"
+                f"below thresholds (vector min_score={min_score}, bm25 min_score={min_bm25_score}) "
+                f"(dropped vector_scores={[round(c.get('vector_score', 0), 4) for c in dropped if c.get('vector_score') is not None]}, "
+                f"dropped bm25_scores_normalized={[round(c.get('bm25_score_normalized', 0), 4) for c in dropped if c.get('bm25_score_normalized') is not None]})"
+            )
+
+        bm25_only_scores = [
+            round(c.get("bm25_score_normalized"), 4)
+            for c in chunks
+            if c.get("vector_score") is None and c.get("bm25_score_normalized") is not None
+        ]
+        if bm25_only_scores:
+            logger.info(
+                f"[BM25_SCORE_OBSERVE] normalized scores for BM25-only chunks: {bm25_only_scores}"
             )
 
         return kept, {
             "confidence_filter_applied": True,
             "confidence_filter_threshold": min_score,
+            "confidence_filter_bm25_threshold": min_bm25_score,
             "confidence_filter_input_count": len(chunks),
             "confidence_filter_kept_count": len(kept),
             "confidence_filter_dropped_count": len(dropped),
-            "confidence_filter_kept_scores": [round(c.get("vector_score", 0), 4) for c in kept],
-            "confidence_filter_dropped_scores": [
-                round(c.get("vector_score", 0), 4) for c in dropped
+            "confidence_filter_kept_scores": [
+                round(c.get("vector_score", 0), 4)
+                for c in kept
+                if c.get("vector_score") is not None
             ],
+            "confidence_filter_dropped_scores": [
+                round(c.get("vector_score", 0), 4)
+                for c in dropped
+                if c.get("vector_score") is not None
+            ],
+            "confidence_filter_bm25_only_scores_normalized": bm25_only_scores,
         }
 
     async def _search_hybrid(
@@ -315,7 +357,9 @@ class RagRetrievalService:
                 top_k,
                 precomputed_embedding,
             )
-            filtered_chunks, filter_info = self._apply_confidence_filter(raw_chunks, min_score)
+            filtered_chunks, filter_info = self._apply_confidence_filter(
+                raw_chunks, min_score, min_bm25_score=settings.retrieval_min_bm25_score
+            )
             timing_info.update(filter_info)
         else:
             raw_chunks, search_timing = await self._search_similar_chunks_docling(

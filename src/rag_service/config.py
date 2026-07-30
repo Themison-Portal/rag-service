@@ -1,6 +1,7 @@
 """
 Configuration for the RAG microservice.
 """
+
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 
@@ -9,6 +10,7 @@ class Settings(BaseSettings):
     """
     RAG Service settings loaded from environment variables.
     """
+
     # API Keys
     openai_api_key: str
     anthropic_api_key: str
@@ -35,6 +37,9 @@ class Settings(BaseSettings):
     # Retrieval configuration
     retrieval_top_k: int = 20
     retrieval_min_score: float = 0.04
+    retrieval_min_bm25_score: float | None = (
+        None  # observe-mode until derived empirically from real bm25_score_normalized data
+    )
 
     # Hybrid search configuration
     hybrid_search_enabled: bool = True
@@ -77,7 +82,7 @@ class Settings(BaseSettings):
     def clean_secrets(cls, v):
         if isinstance(v, str):
             # Also handle potential quotes or escaped newlines
-            return v.strip().replace('"', '').replace("'", "")
+            return v.strip().replace('"', "").replace("'", "")
         return v
 
 
