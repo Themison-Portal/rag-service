@@ -49,11 +49,12 @@ class Settings(BaseSettings):
     semantic_cache_similarity_threshold: float = 0.90
 
     # Reranking configuration
-    reranker_enabled: bool = False
+    reranker_enabled: bool = True
     reranker_provider: str = "cohere"
     reranker_model: str = "rerank-english-v3.0"
-    reranker_top_k: int = 5
-    cohere_api_key: str = ""
+    reranker_top_k: int = 6
+    retrieval_fetch_k: int = 45  # wide enough to catch scattered/multi-section answers on this doc
+    cohere_api_key: str = "yLkBSYMAAUMR3VxOFzeY7O4a0WYjiRF6XuZKBvt3"
 
     # Contextual retrieval configuration
     contextual_retrieval_enabled: bool = False
