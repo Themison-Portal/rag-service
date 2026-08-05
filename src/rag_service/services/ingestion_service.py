@@ -1,6 +1,8 @@
 """
 RAG Ingestion Service - PDF parsing, chunking, and embedding.
 """
+
+import asyncio
 import logging
 import os
 import tempfile
@@ -15,11 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from rag_service.models.chunks import DocumentChunkDocling
 from rag_service.clients.openai_client import get_embedding_client
+from rag_service.clients.anthropic_client import get_anthropic_client
 from rag_service.config import get_settings
 from rag_service.cache.semantic_cache import SemanticCacheService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+print(f"[STARTUP] contextual_retrieval_enabled={settings.contextual_retrieval_enabled}")
 
 
 class IngestionProgress:
@@ -37,6 +41,13 @@ class RagIngestionService:
     Service for PDF ingestion and chunking using Docling + OpenAI embeddings.
     """
 
+    CONTEXTUAL_SYSTEM_PROMPT = (
+        "You are given a document and a chunk extracted from it. Give a short "
+        "(1-2 sentence) context that situates the chunk within the overall "
+        "document, to improve search retrieval of the chunk when read in "
+        "isolation. Answer with only the context, nothing else."
+    )
+
     def __init__(
         self,
         db: AsyncSession,
@@ -48,9 +59,7 @@ class RagIngestionService:
 
     async def _delete_existing_chunks(self, document_id: UUID) -> int:
         """Delete existing chunks before re-ingestion."""
-        stmt = delete(DocumentChunkDocling).where(
-            DocumentChunkDocling.document_id == document_id
-        )
+        stmt = delete(DocumentChunkDocling).where(DocumentChunkDocling.document_id == document_id)
         result = await self.db.execute(stmt)
         await self.db.commit()
         return result.rowcount
@@ -72,6 +81,77 @@ class RagIngestionService:
 
         except Exception:
             return {"page_number": None, "headings": []}
+
+    async def _generate_contextual_summaries(
+        self,
+        docs: List[Document],
+        full_document_text: str,
+    ) -> List[Optional[str]]:
+        """
+        Phase 4: Contextual retrieval (Anthropic's technique - see
+        anthropic.com/news/contextual-retrieval). For each chunk, ask Claude
+        for a short blurb situating it within the document, to be prepended
+        before embedding. Fixes the class of failure where a chunk reads
+        ambiguously alone (e.g. "the dose shall be reduced by half" with no
+        antecedent for which drug or arm).
+
+        The full document is sent as a cache_control block so N chunks cost
+        ~1 full-document read, not N. contextual_context_window is repurposed
+        as a chunk-count cutoff: past that many chunks (x5, see below),
+        whole-doc-per-call stops being worth it even cached (this runs at
+        ingest time and blocks the progress stream), so we fall back to
+        each chunk's neighbor window instead.
+
+        No-op (returns all-None) unless settings.contextual_retrieval_enabled.
+        """
+        if not settings.contextual_retrieval_enabled:
+            return [None] * len(docs)
+
+        client = get_anthropic_client()
+        window = settings.contextual_context_window
+        use_full_document = len(docs) <= max(window * 5, 20)
+
+        summaries: List[Optional[str]] = [None] * len(docs)
+        semaphore = asyncio.Semaphore(5)  # bound concurrency against API rate limits
+
+        async def _summarize_one(i: int, chunk_text: str, context_text: str) -> None:
+            async with semaphore:
+                try:
+                    response = await client.messages.create(
+                        model=settings.llm_model,
+                        max_tokens=150,
+                        system=[
+                            {"type": "text", "text": self.CONTEXTUAL_SYSTEM_PROMPT},
+                            {
+                                "type": "text",
+                                "text": f"<document>\n{context_text}\n</document>",
+                                "cache_control": {"type": "ephemeral"},
+                            },
+                        ],
+                        messages=[{"role": "user", "content": f"<chunk>\n{chunk_text}\n</chunk>"}],
+                    )
+                    summaries[i] = response.content[0].text.strip()
+                except Exception as e:
+                    logger.warning(f"[CONTEXTUAL_RETRIEVAL] chunk {i} failed: {e}")
+
+        tasks = []
+        for i, doc in enumerate(docs):
+            if use_full_document:
+                context_text = full_document_text
+            else:
+                lo, hi = max(0, i - window), min(len(docs), i + window + 1)
+                context_text = "\n\n".join(d.page_content for d in docs[lo:hi])
+            tasks.append(_summarize_one(i, doc.page_content, context_text))
+
+        await asyncio.gather(*tasks)
+
+        failed = sum(1 for s in summaries if s is None)
+        if failed:
+            logger.warning(
+                f"[CONTEXTUAL_RETRIEVAL] {failed}/{len(docs)} chunks got no summary; "
+                f"those embed/store without one."
+            )
+        return summaries
 
     async def _insert_docling_chunks(
         self,
@@ -127,7 +207,9 @@ class RagIngestionService:
             yield IngestionProgress("INVALIDATING", 5, "Invalidating existing caches...")
 
             if self.semantic_cache_service:
-                deleted_semantic = await self.semantic_cache_service.invalidate_document(document_id)
+                deleted_semantic = await self.semantic_cache_service.invalidate_document(
+                    document_id
+                )
                 if deleted_semantic > 0:
                     logger.info(f"Invalidated {deleted_semantic} semantic cache entries")
 
@@ -147,6 +229,7 @@ class RagIngestionService:
 
             # Get tokenizer
             from transformers import AutoTokenizer
+
             tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
 
             yield IngestionProgress("PARSING", 30, "Parsing PDF with Docling...")
@@ -190,17 +273,45 @@ class RagIngestionService:
 
             yield IngestionProgress("CHUNKING", 50, f"Created {len(docs)} chunks...")
 
-            # Stage 4: Generate embeddings
-            yield IngestionProgress("EMBEDDING", 60, f"Generating embeddings for {len(texts)} chunks...")
+            # Stage 3.5: Contextual retrieval (Phase 4) - no-op unless enabled
+            contextual_summaries: Optional[List[str]] = None
+            if settings.contextual_retrieval_enabled:
+                yield IngestionProgress(
+                    "CONTEXTUALIZING", 55, f"Generating context for {len(docs)} chunks..."
+                )
+                full_document_text = "\n\n".join(texts)
+                contextual_summaries = await self._generate_contextual_summaries(
+                    docs, full_document_text
+                )
 
-            chunk_embeddings = await self.embedding_client.aembed_documents(texts)
+            # Stage 4: Generate embeddings
+            yield IngestionProgress(
+                "EMBEDDING", 60, f"Generating embeddings for {len(texts)} chunks..."
+            )
+
+            # Embed the contextualized text (summary + chunk), per Anthropic's
+            # approach - stored `content` stays the raw chunk (citations/
+            # exactText matching need the unprefixed text).
+            texts_to_embed = texts
+            if contextual_summaries:
+                texts_to_embed = [
+                    f"{s}\n\n{t}" if s else t for s, t in zip(contextual_summaries, texts)
+                ]
+
+            chunk_embeddings = await self.embedding_client.aembed_documents(texts_to_embed)
 
             yield IngestionProgress("EMBEDDING", 80, "Embeddings complete...")
 
             # Stage 5: Store in database
             yield IngestionProgress("STORING", 85, "Storing chunks in database...")
 
-            await self._insert_docling_chunks(document_id,organization_id, docs, chunk_embeddings)
+            await self._insert_docling_chunks(
+                document_id,
+                organization_id,
+                docs,
+                chunk_embeddings,
+                contextual_summaries=contextual_summaries,
+            )
 
             # Complete
             result = {

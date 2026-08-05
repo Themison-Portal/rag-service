@@ -72,11 +72,20 @@ class RagRetrievalService:
 
         query_vector_str = self._embedding_to_pg_vector(query_vector)
 
+        # NOTE (Phase 4 - contextual retrieval): contextual_summary is
+        # selected here so it survives into the chunk dict returned to
+        # generation_service, which prepends it to the chunk before it goes
+        # into the LLM prompt. It's populated at ingest time (see
+        # ingestion_service._generate_contextual_summaries) and is NULL for
+        # documents ingested before contextual_retrieval_enabled was on, or
+        # for any chunk whose summary generation failed - both cases are
+        # handled downstream (falls back to plain content, no prepend).
         sql = text("""
             SELECT
                 pc.content,
                 pc.page_number,
                 pc.chunk_metadata,
+                pc.contextual_summary,
                 1 - (pc.embedding <=> (:v)::vector) AS similarity
             FROM document_chunks_docling pc
             WHERE pc.document_id = :pid
@@ -100,6 +109,7 @@ class RagRetrievalService:
             {
                 "page_content": row.content,
                 "score": float(row.similarity),
+                "contextual_summary": row.contextual_summary,
                 "metadata": {
                     "title": document_name,
                     "page": row.page_number,
@@ -128,6 +138,7 @@ class RagRetrievalService:
                 pc.content,
                 pc.page_number,
                 pc.chunk_metadata,
+                pc.contextual_summary,
                 ts_rank(pc.content_tsv, plainto_tsquery('english', :query)) AS bm25_score
             FROM document_chunks_docling pc
             WHERE pc.document_id = :pid
@@ -151,6 +162,7 @@ class RagRetrievalService:
                 "id": str(row.id),
                 "page_content": row.content,
                 "score": float(row.bm25_score),
+                "contextual_summary": row.contextual_summary,
                 "metadata": {
                     "title": document_name,
                     "page": row.page_number,
