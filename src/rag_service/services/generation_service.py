@@ -1,8 +1,25 @@
 """
 RAG Generation Service - LLM answer generation with caching.
 
-Changes in this revision (Step 2 of the RAG Development Plan, plus
-logging follow-ups agreed alongside it):
+Changes in this revision (Step 5 of the RAG Development Plan - contextual
+retrieval, on top of the Step 2 grounding/logging work):
+  - _extract_chunk_metadata now carries contextual_summary through from the
+    retrieved chunk dict (populated at ingest time, see
+    ingestion_service._generate_contextual_summaries; NULL for chunks
+    ingested before the feature was enabled, or where summary generation
+    failed - both are handled as "no context to prepend").
+  - _compress_chunks carries contextual_summary through both the
+    single-chunk and merged-page branches (picks the first non-null summary
+    among merged chunks, since same-page chunks share a neighborhood).
+  - _format_context_compact prepends the contextual summary ahead of the
+    chunk content when present, so the LLM sees it as part of the chunk's
+    context rather than as a separate signal.
+  - _log_query_trace now records whether each retrieved chunk had context,
+    to make the contextual-retrieval eval (measuring effect vs baseline)
+    checkable against production trace logs, not just the offline eval
+    script.
+
+Changes carried over from Step 2:
   - Added explicit grounding rule to SYSTEM_PROMPT: don't guess/fill gaps
     with general knowledge when context is insufficient.
   - Added explicit relevance-scoring instruction to SYSTEM_PROMPT: the
@@ -40,6 +57,18 @@ SYSTEM_PROMPT = """You are an expert clinical Document assistant. You MUST respo
 
 RULES:
 - Use ONLY the provided context
+- AMBIGUITY: If the question is short, generic, or could reasonably refer to more than one
+  thing in the document (e.g. "what is the dose?" when multiple doses/arms exist), do NOT
+  pick one interpretation and answer as if it were the only one. Either present all the
+  relevant options the context supports (e.g. all treatment arms and their doses), or ask
+  a clarifying question in the response text. Do not default to whichever retrieved chunk
+  happens to be most detailed if the question itself doesn't specify which thing it means.
+- COMPLETENESS FOR LISTS: When the question asks for "all," "main," or a full set of items
+  (e.g. all exclusion/inclusion criteria, all endpoints), and the context contains a numbered
+  or lettered list, you MUST include every single numbered/lettered item present in the
+  context verbatim in your response — do not summarize, merge, or silently omit any item,
+  even if some seem redundant or minor. If the context shows items numbered 1 through N,
+  your response must account for all N.
 - CRITICAL - EXACT REFUSAL PHRASE: If the context does not contain enough information to answer
   confidently, your response text MUST contain the literal substring "I don't have this
   information" - this exact wording, character for character. Do not paraphrase it, do not use a
@@ -108,6 +137,7 @@ class RagGenerationService:
             "bbox": bbox,
             "content": doc.get("page_content", ""),
             "score": doc.get("score"),
+            "contextual_summary": doc.get("contextual_summary"),
         }
 
     def _compress_chunks(self, chunks: List[dict]) -> List[dict]:
@@ -132,6 +162,20 @@ class RagGenerationService:
                 all_content = "\n...\n".join(m["content"] for m in group)
                 section = next((m["section"] for m in group if m["section"]), None)
                 all_scores = [m["score"] for m in group if m.get("score") is not None]
+                contextual_summary = next(
+                    (m["contextual_summary"] for m in group if m.get("contextual_summary")),
+                    None,
+                )
+
+                MAX_MERGED_CONTENT_CHARS = (
+                    6000  # was 2000 - silently truncated mid-list on dense pages
+                )
+                merged_content = all_content[:MAX_MERGED_CONTENT_CHARS]
+                if len(all_content) > MAX_MERGED_CONTENT_CHARS:
+                    logger.warning(
+                        f"[COMPRESSION_TRUNCATED] {title} p.{page}: {len(all_content)} chars "
+                        f"truncated to {MAX_MERGED_CONTENT_CHARS} - content may be lost"
+                    )
 
                 compressed.append(
                     {
@@ -139,12 +183,12 @@ class RagGenerationService:
                         "page": page,
                         "section": section,
                         "bboxes": all_bboxes,
-                        "content": all_content[:2000],
+                        "content": merged_content,
                         "merged_count": len(group),
                         "scores": all_scores,
+                        "contextual_summary": contextual_summary,
                     }
                 )
-
         logger.info(f"[COMPRESSION] {len(chunks)} chunks -> {len(compressed)} compressed")
         return compressed
 
@@ -153,13 +197,15 @@ class RagGenerationService:
         title = chunk_meta.get("title", "Unknown")
         page = chunk_meta.get("page", 0)
         content = chunk_meta.get("content", "")
+        contextual_summary = chunk_meta.get("contextual_summary")
 
         if "bboxes" in chunk_meta:
             bbox_str = str(chunk_meta["bboxes"])
         else:
             bbox_str = str(chunk_meta.get("bbox"))
 
-        return f"[{title}|p{page}|bbox:{bbox_str}]\n{content}"
+        body = f"{contextual_summary}\n{content}" if contextual_summary else content
+        return f"[{title}|p{page}|bbox:{bbox_str}]\n{body}"
 
     def _repair_json(self, json_str: str) -> str:
         """Attempt to repair common JSON formatting issues."""
@@ -237,6 +283,7 @@ class RagGenerationService:
                     "section": c.get("section"),
                     "score": c.get("score"),
                     "scores": c.get("scores"),
+                    "had_context": bool(c.get("contextual_summary")),
                 }
                 for c in compressed_chunks
             ],

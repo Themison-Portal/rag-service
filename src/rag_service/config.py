@@ -57,13 +57,13 @@ class Settings(BaseSettings):
     cohere_api_key: str = "yLkBSYMAAUMR3VxOFzeY7O4a0WYjiRF6XuZKBvt3"
 
     # Contextual retrieval configuration
-    contextual_retrieval_enabled: bool = False
+    contextual_retrieval_enabled: bool = True
     contextual_context_window: int = 3
 
     # LLM configuration
     llm_model: str = "claude-sonnet-4-6"
     # llm_max_tokens: int = 2000
-    llm_max_tokens: int = 6000
+    llm_max_tokens: int = 10000
 
     class Config:
         env_file = ".env"

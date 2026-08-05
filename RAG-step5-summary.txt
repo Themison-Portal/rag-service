@@ -1,0 +1,107 @@
+RAG Fix - Step 5: Contextual Retrieval
+======================================================
+
+What we did
+----------------
+Contextual retrieval was configured but never actually implemented -
+the config flags (contextual_retrieval_enabled, contextual_context_window)
+existed, and the database even had a contextual_summary column, but
+nothing generated, stored, or used a summary for any chunk. Finished
+it end to end:
+
+- At ingest time, each chunk now gets a short (1-2 sentence)
+  Claude-written summary situating it within the document - e.g. what
+  section it's from and what it's about.
+- That summary is combined with the chunk before embedding, so
+  retrieval can match on it too.
+- It's stored alongside the chunk and pulled back at query time
+  through both the vector and keyword search paths, surviving
+  reranking unchanged.
+- It gets prepended to the chunk before the AI sees it, so the AI has
+  that extra context when answering.
+
+Also fixed three bugs found while testing, none of them actually
+about contextual retrieval - they were pre-existing issues that a
+long, dense exclusion-criteria list happened to expose:
+
+- Long answers with lots of citations were getting cut off
+  mid-response (raised the AI's response length limit).
+- The AI was silently dropping or merging list items instead of
+  listing all of them (added an explicit instruction: list every
+  item, or say what's missing).
+- A page's chunk content was getting hard-cut at 2000 characters with
+  no warning - on a dense page this sliced off real content
+  (including one full exclusion criterion) before the AI ever saw it
+  (raised the cut-off and added a warning log so this won't happen
+  silently again).
+
+
+Test we ran
+----------------
+Document: Protocol_Ulcerative Colitis.pdf (same one from Steps 1, 2,
+and 4)
+
+The team put together a structured 38-question test set across five
+categories: plain factual questions, questions that need a complete
+list back (not just one item), the CRP/protocol-amendment trap from
+earlier steps, questions with no answer in the document (should
+refuse, not guess), and ambiguous questions (should ask for
+clarification, not guess). Ran one question per category as a spot
+check, with the rest of the set still to run as part of the follow-up
+PR.
+
+
+What we found
+----------------
+- Factual - "What is the primary endpoint of the study?" - correct,
+  matched the answer key.
+- Full list - "What are the main exclusion criteria?" - all 27 items
+  came back correctly after the fixes above (missed items 12-16,
+  including a Hepatitis B/C/HIV exclusion, before the fixes).
+- CRP trap - "How is CRP used for stratification?" - correctly said
+  CRP was removed as a stratification factor in the current protocol
+  version, explained what replaced it, and separately noted CRP is
+  still tracked as a biomarker.
+- Unanswerable - "What is the FDA approval status of TJ301?" -
+  correctly refused, explained the drug is still in Phase II
+  development rather than guessing an approval status.
+- Ambiguous - "What is the dose?" - after adding an explicit
+  instruction for this, it now correctly recognizes the question is
+  ambiguous and asks whether it means the Phase 1 dose range or the
+  current trial's arms, instead of confidently answering with the
+  wrong one.
+
+
+Something found but not fixed yet
+----------------------------------
+The ambiguous-dose question above still can't fully answer either
+interpretation, even after the fix - because the chunk with the
+current trial's actual doses (600mg/300mg) never gets retrieved for a
+short query like "what is the dose". Checked its contextual summary
+directly - it describes the page as being about "dosing schedule" and
+"dose constraints" without stating the actual numbers, so it doesn't
+match a short factual query well. The fix is to have the
+summary-generation prompt call out concrete figures explicitly
+instead of describing them generically - drafted but not applied,
+since it means re-ingesting every document again.
+
+Separately, ran into a semantic cache issue during testing - a stale,
+broken answer from before a fix kept getting served on repeat queries
+because the cache doesn't know when the underlying prompt or settings
+have changed. Had to manually clear it each time to actually see
+whether a fix worked. Worth a proper fix later, not blocking.
+
+The BM25 AND-query issue documented back in Step 2 is still open. Now
+that both reranking (Step 4) and contextual retrieval (this step)
+have landed, it may be worth revisiting rather than waiting for chunk
+overlap too - the AND/OR decision was deliberately deferred until the
+retrieval pipeline stopped changing shape, and it's now closer to
+settled (see BM25_AND_query_finding.txt for the updated status).
+
+
+Next
+----------------
+Finish running the remaining questions in the 38-question test set
+(separate PR), and decide between Step 6 (chunk overlap) and
+revisiting the BM25 AND/OR query question now that reranking and
+contextual retrieval are both in place.
