@@ -64,6 +64,11 @@ class GenerateBody(BaseModel):
     response_schema_name: str = "structured_output"
 
 
+class ChatTurn(BaseModel):
+    role: str
+    content: str
+
+
 class QueryBody(BaseModel):
     query: str
     document_id: str
@@ -71,6 +76,7 @@ class QueryBody(BaseModel):
     organization_id: str
     top_k: int = 0
     min_score: float = 0.0
+    conversation_history: List[ChatTurn] = Field(default_factory=list)
 
 
 class BBox(BaseModel):
@@ -188,6 +194,8 @@ def create_app() -> FastAPI:
                     organization_id=organization_id,
                     top_k=top_k,
                     min_score=min_score,
+                    conversation_history=[t.model_dump() for t in body.conversation_history]
+                    or None,
                 )
         except Exception as e:
             logger.exception("HTTP /query error")

@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     contextual_retrieval_enabled: bool = True
     contextual_context_window: int = 3
 
+    # Conversation history configuration
+    conversation_history_enabled: bool = True
+    conversation_history_max_turns: int = 5
+
     # LLM configuration
     llm_model: str = "claude-sonnet-4-6"
     # llm_max_tokens: int = 2000

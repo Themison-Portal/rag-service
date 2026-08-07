@@ -1,108 +1,21 @@
-INFO:     Will watch for changes in these directories: ['/Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [17704] using WatchFiles
 [STARTUP] contextual_retrieval_enabled=True
-INFO:     Started server process [17708]
+INFO:     Started server process [66255]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:63300 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63308 - "POST /v1/query HTTP/1.1" 200 OK
-[EMPTY_SOURCES] query='What about corticosteroids?' stop_reason=end_turn chunk_count=2 chunk_pages=[23, 37] raw_content_tail='8, 176.0949752178484]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 37, "section": "4.3.3 Other Restrictions", "exactText": "Patients on stable-dose concomitant treatment for UC at Visit 2 must remain on a stable dose throughout the trial except for patients on corticosteroids; tapering of corticosteroids is allowed at the discretion of the Investigator.", "bboxes": [[72.0000000000002, 323.7839829101563, 543.8400000000001, 283.1349752178486]], "relevance": "high"}]}'
-[SOURCES_FALLBACK] Reconstructing sources for query='What about corticosteroids?'
-INFO:     127.0.0.1:63313 - "POST /v1/query HTTP/1.1" 200 OK
-[LLM_TRUNCATED] query='What are the requirements?' stop_reason=max_tokens raw_len=6266
-[EMPTY_SOURCES] query='What are the requirements?' stop_reason=max_tokens chunk_count=3 chunk_pages=[10, 34, 9] raw_content_tail=') at no less than 1.5 mg/kg/day or mercaptopurine (6-MP) at no less than 0.75 mg/kg/day for at least 6 months and stable for at least 6 weeks prior to Randomization.\\n6. A female subject has been sterilized or has been menopausal, or the subject has no pregnancy plan during the trial and voluntarily adopts effective contraceptive measures.\\n7. The patient is able and willing to comply with the requirements of this trial protocol.\\n8. The subject should be able to read and write to understand and'
-[SOURCES_FALLBACK] Reconstructing sources for query='What are the requirements?'
-INFO:     127.0.0.1:63322 - "POST /v1/query HTTP/1.1" 200 OK
-[LLM_TRUNCATED] query='What are the requirements?' stop_reason=max_tokens raw_len=6158
-[EMPTY_SOURCES] query='What are the requirements?' stop_reason=max_tokens chunk_count=3 chunk_pages=[10, 34, 9] raw_content_tail='endoscopy subscore ≥2.", "bboxes": [[72.00000000000001, 124.94398291015625, 521.0400000000001, 114.65497521784857]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 10, "section": "Inclusion Criteria", "exactText": "5. Treated with conventional non-biological UC therapy: with corticosteroids stable for at least 2 weeks prior to Randomization at no more than 20 mg prednisone (or equivalent), and/or with medications containing 5-aminosalicylates (5-ASA) at no less than 2 '
-[SOURCES_FALLBACK] Reconstructing sources for query='What are the requirements?'
-INFO:     127.0.0.1:63414 - "POST /v1/query HTTP/1.1" 200 OK
-[LLM_TRUNCATED] query='What are the requirements?' stop_reason=max_tokens raw_len=6541
-[EMPTY_SOURCES] query='What are the requirements?' stop_reason=max_tokens chunk_count=3 chunk_pages=[10, 34, 9] raw_content_tail='scopy subscore ≥2 .", "bboxes": [[72.00000000000001, 124.94398291015625, 521.0400000000001, 114.65497521784857]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 10, "section": "Inclusion Criteria", "exactText": "5. Treated with conventional non-biological UC therapy: with corticosteroids stable for at least 2 weeks prior to Randomization at no more than 20 mg prednisone (or equivalent), and/or with medications containing 5-aminosalicylates (5-ASA) at no less than 2 g 5'
-[SOURCES_FALLBACK] Reconstructing sources for query='What are the requirements?'
-INFO:     127.0.0.1:63422 - "POST /v1/query HTTP/1.1" 200 OK
-[LLM_TRUNCATED] query='What are the requirements?' stop_reason=max_tokens raw_len=6506
-[EMPTY_SOURCES] query='What are the requirements?' stop_reason=max_tokens chunk_count=3 chunk_pages=[10, 34, 9] raw_content_tail=' 521.0400000000001, 114.65497521784857]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 10, "section": "Inclusion Criteria", "exactText": "5. Treated with conventional non-biological UC therapy: with corticosteroids stable for at least 2 weeks prior to Randomization at no more than 20 mg prednisone (or equivalent), and/or with medications containing 5-aminosalicylates (5-ASA) at no less than 2 g 5-ASA per day for at least 3 months and stable for at least 4 weeks prior'
-[SOURCES_FALLBACK] Reconstructing sources for query='What are the requirements?'
-INFO:     127.0.0.1:63430 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63473 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63491 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63506 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63514 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63518 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63522 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63528 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63532 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63537 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63541 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63545 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63549 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63554 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63558 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63562 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63567 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63571 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63577 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63581 - "POST /v1/query HTTP/1.1" 200 OK
-[LLM_TRUNCATED] query='What are the main exclusion criteria?' stop_reason=max_tokens raw_len=6464
-[EMPTY_SOURCES] query='What are the main exclusion criteria?' stop_reason=max_tokens chunk_count=4 chunk_pages=[10, 34, 11, 12] raw_content_tail='imited to the rectum (ulcerative proctitis), infective enteritis, amebic bowel disease and intestinal schistosomiasis.\\n6. History of malignancy other than a successfully treated non-metastatic cutaneous squamous cell or basal cell carcinoma and/or localized carcinoma in situ of the cervix.\\n7. Primary or secondary immunodeficiency including neutropenia (absolute neutrophil count",\n      "bboxes": [[72.0, 355.22, 520.56, 344.93]],\n      "relevance": "high"\n    },\n    {\n      "name": "Protocol_Ul'
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+[LLM_TRUNCATED] query='What are the main exclusion criteria?' stop_reason=max_tokens raw_len=6467
+[EMPTY_SOURCES] query='What are the main exclusion criteria?' stop_reason=max_tokens chunk_count=4 chunk_pages=[10, 34, 11, 12] raw_content_tail=' limited to the rectum (ulcerative proctitis), infective enteritis, amebic bowel disease and intestinal schistosomiasis.\\n6. History of malignancy other than a successfully treated non-metastatic cutaneous squamous cell or basal cell carcinoma and/or localized carcinoma in situ of the cervix.\\n7. Primary or secondary immunodeficiency including neutropenia (absolute neutrophil count",\n      "bboxes": [[72.0, 355.22, 520.56, 344.93]],\n      "relevance": "high"\n    },\n    {\n      "name": "Protocol_'
 [SOURCES_FALLBACK] Reconstructing sources for query='What are the main exclusion criteria?'
-INFO:     127.0.0.1:63586 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63591 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63598 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63604 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63608 - "POST /v1/query HTTP/1.1" 200 OK
-[EMPTY_SOURCES] query='What changed in the randomisation stratification between protocol versions?' stop_reason=end_turn chunk_count=5 chunk_pages=[90, 92, 94, 95, 93] raw_content_tail='y and dynamically randomised into **3 groups (1:1:1)** to receive:\n- 600 mg TJ301 Q2W\n- 300 mg TJ301 Q2W\n- Placebo Q2W\n\nThese changes were noted in the high-level summary of amendments as both "Clarify stratification factors in randomization" and "Modify the randomisation-stratification factors." (Protocol_Ulcerative Colitis.pdf, p90)\n\n---\n\n**Sources:**\n\n| Page | Detail |\n|------|--------|\n| p92 | Specific old vs. new stratification factor text |\n| p90 | High-level bullet summary of the change |'
-[SOURCES_FALLBACK] Reconstructing sources for query='What changed in the randomisation stratification between protocol versions?'
-INFO:     127.0.0.1:63612 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63616 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63621 - "POST /v1/query HTTP/1.1" 200 OK
-[SEMANTIC_CACHE] Store error: (sqlalchemy.dialects.postgresql.asyncpg.InterfaceError) <class 'asyncpg.exceptions._base.InterfaceError'>: cannot call PreparedStatement.fetch(): the underlying connection is closed
-[SQL: INSERT INTO semantic_cache_responses (id, query_text, query_embedding, document_id, organization_id, response_data, hit_count, created_at, last_accessed_at, context_hash) VALUES ($1::UUID, $2::VARCHAR, $3, $4::UUID, $5::UUID, $6::JSON, $7::INTEGER, $8::TIMESTAMP WITH TIME ZONE, $9::TIMESTAMP WITH TIME ZONE, $10::VARCHAR)]
-[parameters: (UUID('49da230f-1b37-4eb1-b0bb-7f349f3173e8'), 'What does CRP refer to and how is it used in this protocol?', '[0.0156402587890625,0.034149169921875,0.01806640625,0.036773681640625,-0.0129241943359375,0.0258331298828125,-0.0015497207641601562,0.002716064453125 ... (29154 characters truncated) ... 6796875,0.010162353515625,-0.0272674560546875,-0.00754547119140625,-0.037506103515625,-0.005123138427734375,0.0120697021484375,0.0019550323486328125]', UUID('ae08b6b1-fdc6-4304-8592-d02473a84ecc'), UUID('ee5b5b9f-1848-4b78-8d55-5662f02ad471'), '{"response": "**CRP** stands for **C-Reactive Protein** (Protocol_Ulcerative Colitis.pdf, p. 18).\\n\\n## How CRP is Used in This Protocol\\n\\nCRP i ... (1099 characters truncated) ... nd platelet count\\n- From faeces: calprotectin", "bboxes": [[72.0, 721.4399829101562, 554.5199999999999, 693.5349752178486]], "relevance": "high"}]}', 0, datetime.datetime(2026, 8, 5, 20, 0, 58, 392352, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 8, 5, 20, 0, 58, 392360, tzinfo=datetime.timezone.utc), '7ecf6125310e82fa0c0cb437a4e0535c')]
-(Background on this error at: https://sqlalche.me/e/20/rvf5)
-INFO:     127.0.0.1:63626 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63704 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63711 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63715 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63721 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63729 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63733 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63737 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63746 - "POST /v1/query HTTP/1.1" 200 OK
-[EMPTY_SOURCES] query="What is the sponsor's annual revenue?" stop_reason=end_turn chunk_count=5 chunk_pages=[79, 64, 2, 80, 72] raw_content_tail='mation regarding the sponsor\'s annual revenue. The provided context only contains information about the clinical trial protocol for Ulcerative Colitis, covering topics such as liabilities and insurance (Section 15.2), SAE reporting obligations (Section 8.5.2), compliance statements, Trial Master File archiving (Section 16.2), and provision of additional information (Section 10.5). No financial information about the sponsor\'s revenue is mentioned anywhere in the provided context.", "sources": []}'
-[SOURCES_FALLBACK] Reconstructing sources for query="What is the sponsor's annual revenue?"
-INFO:     127.0.0.1:63757 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63767 - "POST /v1/query HTTP/1.1" 200 OK
-[EMPTY_SOURCES] query='Can you be more specific?' stop_reason=end_turn chunk_count=6 chunk_pages=[29, 72, 61, 86, 94, 39] raw_content_tail=' or specific subject indicated in your query.\\n\\nCould you please clarify what you would like more details about? For example, are you asking about:\\n- **The Safety Review Committee (SRC)?**\\n- **Pregnancy reporting procedures?**\\n- **Data management processes?**\\n- **Urinalysis parameters?**\\n- **Treatment dosing and storage?**\\n- **Protocol version changes?**\\n\\nPlease restate your question with a specific topic or subject, and I will be happy to provide a detailed answer.", "sources": []}\n```'
-[SOURCES_FALLBACK] Reconstructing sources for query='Can you be more specific?'
-INFO:     127.0.0.1:63774 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63778 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63784 - "POST /v1/query HTTP/1.1" 200 OK
-[LLM_TRUNCATED] query='What are the requirements?' stop_reason=max_tokens raw_len=6495
-[EMPTY_SOURCES] query='What are the requirements?' stop_reason=max_tokens chunk_count=3 chunk_pages=[10, 34, 9] raw_content_tail='o Randomisation, an endoscopy subscore ≥2.", "bboxes": [[72.00000000000001, 124.94398291015625, 521.0400000000001, 114.65497521784857]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 10, "section": "Inclusion Criteria", "exactText": "5. Treated with conventional non-biological UC therapy: with corticosteroids stable for at least 2 weeks prior to Randomization at no more than 20 mg prednisone (or equivalent), and/or with medications containing 5-aminosalicylates (5-ASA'
-[SOURCES_FALLBACK] Reconstructing sources for query='What are the requirements?'
-INFO:     127.0.0.1:63794 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63822 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63828 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63847 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63871 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63883 - "POST /v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56102 - "POST /v1/ingest_pdf HTTP/1.1" 200 OK
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-The plugin langchain_docling will not be loaded because Docling is being executed with allow_external_plugins=false.
-The plugin langchain_docling will not be loaded because Docling is being executed with allow_external_plugins=false.
-[32m[INFO] 2026-08-06 11:19:49,592 [RapidOCR] base.py:23: Using engine_name: onnxruntime[0m
-[32m[INFO] 2026-08-06 11:19:49,602 [RapidOCR] download_file.py:60: File exists and is valid: /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx[0m
-[32m[INFO] 2026-08-06 11:19:49,602 [RapidOCR] main.py:63: Using /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx[0m
-[32m[INFO] 2026-08-06 11:19:49,627 [RapidOCR] base.py:23: Using engine_name: onnxruntime[0m
-[32m[INFO] 2026-08-06 11:19:49,630 [RapidOCR] download_file.py:60: File exists and is valid: /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx[0m
-[32m[INFO] 2026-08-06 11:19:49,630 [RapidOCR] main.py:63: Using /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx[0m
-[32m[INFO] 2026-08-06 11:19:49,648 [RapidOCR] base.py:23: Using engine_name: onnxruntime[0m
-[32m[INFO] 2026-08-06 11:19:49,665 [RapidOCR] download_file.py:60: File exists and is valid: /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx[0m
-[32m[INFO] 2026-08-06 11:19:49,665 [RapidOCR] main.py:63: Using /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx[0m
-The plugin langchain_docling will not be loaded because Docling is being executed with allow_external_plugins=false.
-Loading weights:   0%|          | 0/770 [00:00<?, ?it/s]Loading weights:  18%|█▊        | 136/770 [00:00<00:01, 491.08it/s]Loading weights:  33%|███▎      | 251/770 [00:00<00:00, 711.42it/s]Loading weights:  54%|█████▍    | 419/770 [00:00<00:00, 1025.16it/s]Loading weights:  81%|████████  | 621/770 [00:00<00:00, 1332.00it/s]Loading weights: 100%|██████████| 770/770 [00:00<00:00, 1165.03it/s]
-The plugin langchain_docling will not be loaded because Docling is being executed with allow_external_plugins=false.
-[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (8962 > 512). Running this sequence through the model will result in indexing errors
+INFO:     127.0.0.1:61640 - "POST /v1/query HTTP/1.1" 200 OK
+[LLM_TRUNCATED] query='Can you be more specific about the hepatic ones?' stop_reason=max_tokens raw_len=5795
+[EMPTY_SOURCES] query='Can you be more specific about the hepatic ones?' stop_reason=max_tokens chunk_count=6 chunk_pages=[87, 85, 97, 35, 11, 18] raw_content_tail='000000003, 440.2149752178484]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 87, "section": "Other Laboratory Assessments", "exactText": "HBV (Hepatitis B Surface Antigen)\\n- HCV (Hepatitis C Antibody)", "bboxes": [[71.63999999999999, 547.4399829101563, 503.1599999999998, 519.5349752178487]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 11, "section": "Exclusion Criteria", "exactText": "Known clinically relevant chronic liver disease. Imp'
+[SOURCES_FALLBACK] Reconstructing sources for query='Can you be more specific about the hepatic ones?'
+INFO:     127.0.0.1:61647 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61652 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61657 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61662 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61668 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61671 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61673 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61675 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61677 - "POST /v1/query HTTP/1.1" 200 OK

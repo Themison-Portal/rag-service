@@ -90,6 +90,29 @@ RESPOND WITH THIS EXACT JSON STRUCTURE (no other text):
 
 SYSTEM_PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 
+# Separate, lightweight prompt for query condensation (Step 3 - conversation
+# history). Deliberately NOT part of SYSTEM_PROMPT: condensation is a small,
+# fast rewrite task, not a grounded-answer task, and keeping it isolated
+# means a change to one prompt can't accidentally affect the other.
+CONDENSE_PROMPT = """Given a conversation history and a new question, rewrite the \
+new question as a standalone question that can be understood without the \
+conversation history.
+
+RULES:
+- Only resolve ambiguous references (pronouns like "it"/"that", phrases like \
+"the other one", "what about X instead") using the conversation history. Do \
+NOT add facts, assumptions, numbers, or clinical details that were not \
+explicitly stated in the conversation or the new question.
+- If you cannot confidently resolve what the new question refers to, return \
+it UNCHANGED rather than guessing - an unresolved but honest question is \
+better than a confidently wrong rewrite in this context.
+- If the new question is already standalone (doesn't depend on anything in \
+the prior turns), return it unchanged.
+- Do not attempt to answer the question. Only rewrite it.
+
+Answer with ONLY the rewritten (or unchanged) question, nothing else - no \
+preamble, no explanation, no quotation marks."""
+
 
 class RagGenerationService:
     """
@@ -103,6 +126,58 @@ class RagGenerationService:
     ):
         self.retrieval_service = retrieval_service
         self.semantic_cache_service = semantic_cache_service
+
+    async def _condense_query(
+        self,
+        conversation_history: List[dict],
+        new_question: str,
+    ) -> str:
+        """
+        Step 3: rewrite a follow-up into a standalone query using recent
+        conversation turns, so retrieval has something meaningful to embed
+        and search on (previously only the latest message ever reached
+        retrieval - "can you be more specific?" embedded and searched on
+        its own, with no reference to what it was a follow-up to).
+
+        Runs BEFORE retrieval. The original, unmodified new_question is
+        still what's shown to the LLM for generation and to the user -
+        only the retrieval-stage query changes, so the visible answer
+        reads naturally rather than like it's answering a paraphrase.
+
+        Returns new_question unchanged if there's no history, or on any
+        failure - condensation is a retrieval-quality enhancement, not a
+        hard dependency; a bad/missing rewrite should degrade to today's
+        known-safe behavior, not break the query.
+        """
+        if not conversation_history or not settings.conversation_history_enabled:
+            return new_question
+
+        try:
+            max_turns = settings.conversation_history_max_turns
+            history_text = "\n".join(
+                f"{turn.get('role', 'user')}: {turn.get('content', '')}"
+                for turn in conversation_history[-max_turns:]
+            )
+            client = get_anthropic_client()
+            response = await client.messages.create(
+                model=settings.llm_model,
+                max_tokens=150,
+                system=CONDENSE_PROMPT,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": (
+                            f"<conversation>\n{history_text}\n</conversation>\n\n"
+                            f"<new_question>\n{new_question}\n</new_question>"
+                        ),
+                    }
+                ],
+            )
+            condensed = response.content[0].text.strip()
+            return condensed if condensed else new_question
+        except Exception as e:
+            logger.warning(f"[CONDENSE_QUERY] failed, using original question: {e}")
+            return new_question
 
     def _extract_chunk_metadata(self, doc: dict) -> dict:
         """Extract metadata from a chunk."""
@@ -270,11 +345,13 @@ class RagGenerationService:
         formatted_context: str,
         result: dict,
         timing_info: dict,
+        retrieval_query: Optional[str] = None,
     ) -> None:
         """Single structured log line per query - full trace for debugging/eval."""
         trace = {
             "event": "rag_query_trace",
             "query": query_text,
+            "retrieval_query": retrieval_query if retrieval_query != query_text else None,
             "system_prompt_version": SYSTEM_PROMPT_VERSION,
             "retrieved_chunks": [
                 {
@@ -302,6 +379,7 @@ class RagGenerationService:
         organization_id: UUID,
         top_k: int = None,
         min_score: float = 0.04,
+        conversation_history: Optional[List[dict]] = None,
     ) -> dict:
         """
         Generate answer with timing information.
@@ -315,13 +393,30 @@ class RagGenerationService:
             "chunks_compressed": False,
         }
 
+        # 0. Condense follow-up questions into a standalone query BEFORE
+        # anything touches retrieval. query_text (the original question) is
+        # still used for generation/display below - only retrieval_query is
+        # used for embedding/search.
+        condense_start = time.perf_counter()
+        retrieval_query = await self._condense_query(conversation_history or [], query_text)
+        timing_info["condense_ms"] = (time.perf_counter() - condense_start) * 1000
+        timing_info["query_condensed"] = retrieval_query != query_text
+
+        # Follow-up answers are entangled with their specific conversation's
+        # context - caching/serving them across different conversations
+        # risks returning an answer phrased for someone else's follow-up.
+        # Only standalone queries (no history) use the semantic cache.
+        skip_cache = bool(conversation_history)
+
         # 1. Get query embedding
-        query_embedding, embed_timing = await self.retrieval_service.get_query_embedding(query_text)
+        query_embedding, embed_timing = await self.retrieval_service.get_query_embedding(
+            retrieval_query
+        )
         timing_info["embedding_ms"] = embed_timing.get("embedding_ms", 0)
         timing_info["embedding_cache_hit"] = embed_timing.get("cache_hit", False)
 
         # 2. Check semantic cache
-        if self.semantic_cache_service:
+        if self.semantic_cache_service and not skip_cache:
             semantic_start = time.perf_counter()
             cached = await self.semantic_cache_service.get_similar_response(
                 query_embedding=query_embedding,
@@ -339,13 +434,14 @@ class RagGenerationService:
                     f"[TIMING] Semantic cache HIT: {timing_info['generation_total_ms']:.2f}ms"
                 )
 
-                self._log_query_trace(query_text, [], "", cached["response"], timing_info)
+                self._log_query_trace(
+                    query_text, [], "", cached["response"], timing_info, retrieval_query
+                )
 
                 return {"result": cached["response"], "timing": timing_info}
-
         # 3. Retrieve chunks
         filtered_chunks, retrieval_timing = await self.retrieval_service.retrieve_similar_chunks(
-            query_text=query_text,
+            query_text=retrieval_query,
             document_id=document_id,
             document_name=document_name,
             organization_id=organization_id,
@@ -362,7 +458,7 @@ class RagGenerationService:
                 "response": "The provided documents do not contain this information.",
                 "sources": [],
             }
-            self._log_query_trace(query_text, [], "", empty_result, timing_info)
+            self._log_query_trace(query_text, [], "", empty_result, timing_info, retrieval_query)
             return {"result": empty_result, "timing": timing_info}
 
         # 4. Compress chunks
@@ -469,7 +565,7 @@ class RagGenerationService:
             }
 
         # 7. Store in semantic cache
-        if self.semantic_cache_service:
+        if self.semantic_cache_service and not skip_cache:
             context_hash = SemanticCacheService.hash_context(filtered_chunks)
             await self.semantic_cache_service.store_response(
                 query_text=query_text,
@@ -483,6 +579,8 @@ class RagGenerationService:
         timing_info["generation_total_ms"] = (time.perf_counter() - generation_start) * 1000
         logger.info(f"[TIMING] Generation complete: {timing_info['generation_total_ms']:.2f}ms")
 
-        self._log_query_trace(query_text, compressed_chunks, formatted_context, result, timing_info)
+        self._log_query_trace(
+            query_text, compressed_chunks, formatted_context, result, timing_info, retrieval_query
+        )
 
         return {"result": result, "timing": timing_info}
