@@ -142,15 +142,7 @@ class RagIngestionService:
 
         client = get_anthropic_client()
         window = settings.contextual_context_window
-        # Prompt caching (cache_control below) makes whole-document-per-call
-        # cheap after the first call - the doc is written to cache once and
-        # every subsequent chunk call reads it at ~10% of input price. The
-        # old windowed fallback for large documents predates this and was
-        # actively worse: each chunk got a different sliding-window slice of
-        # text, so the cache prefix never repeated and every call paid the
-        # full write premium with zero reads. Raise the cutoff well above any
-        # realistic document size so we stay on the cached full-document path.
-        use_full_document = len(docs) <= max(window * 50, 1000)
+        use_full_document = len(docs) <= max(window * 5, 20)
 
         summaries: List[Optional[str]] = [None] * len(docs)
         semaphore = asyncio.Semaphore(5)  # bound concurrency against API rate limits
