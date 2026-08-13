@@ -142,25 +142,34 @@ class RagIngestionService:
 
         client = get_anthropic_client()
         window = settings.contextual_context_window
-        use_full_document = len(docs) <= max(window * 5, 20)
+        # Prompt caching (cache_control below) makes whole-document-per-call
+        # cheap after the first call - the doc is written to cache once and
+        # every subsequent chunk call reads it at ~10% of input price. The
+        # old windowed fallback for large documents predates this and was
+        # actively worse: each chunk got a different sliding-window slice of
+        # text, so the cache prefix never repeated and every call paid the
+        # full write premium with zero reads. Raise the cutoff well above any
+        # realistic document size so we stay on the cached full-document path.
+        use_full_document = len(docs) <= max(window * 50, 1000)
 
         summaries: List[Optional[str]] = [None] * len(docs)
         semaphore = asyncio.Semaphore(5)  # bound concurrency against API rate limits
 
-        async def _summarize_one(i: int, chunk_text: str, context_text: str) -> None:
+        async def _summarize_one(
+            i: int, chunk_text: str, context_text: str, cacheable: bool
+        ) -> None:
             async with semaphore:
                 try:
+                    system_blocks = [{"type": "text", "text": self.CONTEXTUAL_SYSTEM_PROMPT}]
+                    doc_block = {"type": "text", "text": f"<document>\n{context_text}\n</document>"}
+                    if cacheable:
+                        doc_block["cache_control"] = {"type": "ephemeral"}
+                    system_blocks.append(doc_block)
+
                     response = await client.messages.create(
                         model=settings.llm_model,
                         max_tokens=150,
-                        system=[
-                            {"type": "text", "text": self.CONTEXTUAL_SYSTEM_PROMPT},
-                            {
-                                "type": "text",
-                                "text": f"<document>\n{context_text}\n</document>",
-                                "cache_control": {"type": "ephemeral"},
-                            },
-                        ],
+                        system=system_blocks,
                         messages=[{"role": "user", "content": f"<chunk>\n{chunk_text}\n</chunk>"}],
                     )
                     self._log_llm_usage(
@@ -180,7 +189,7 @@ class RagIngestionService:
             else:
                 lo, hi = max(0, i - window), min(len(docs), i + window + 1)
                 context_text = "\n\n".join(d.page_content for d in docs[lo:hi])
-            tasks.append(_summarize_one(i, doc.page_content, context_text))
+            tasks.append(_summarize_one(i, doc.page_content, context_text, use_full_document))
 
         await asyncio.gather(*tasks)
 
