@@ -4,11 +4,13 @@ RAG Ingestion Service - PDF parsing, chunking, and embedding.
 
 import asyncio
 import logging
+import json
 import os
 import tempfile
 from datetime import datetime
 from typing import AsyncIterator, List, Optional
 from uuid import UUID, uuid4
+
 
 import httpx
 from langchain_core.documents import Document
@@ -82,10 +84,41 @@ class RagIngestionService:
         except Exception:
             return {"page_number": None, "headings": []}
 
+    def _log_llm_usage(
+        self,
+        call_type: str,
+        response,
+        *,
+        document_id: Optional[UUID] = None,
+        organization_id: Optional[UUID] = None,
+        model: Optional[str] = None,
+    ) -> None:
+        """Structured log line per LLM call, for cost tracking."""
+
+        usage = getattr(response, "usage", None)
+        logger.info(
+            json.dumps(
+                {
+                    "event": "llm_usage",
+                    "call_type": call_type,
+                    "model": model or getattr(response, "model", None),
+                    "input_tokens": getattr(usage, "input_tokens", None),
+                    "output_tokens": getattr(usage, "output_tokens", None),
+                    "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
+                    "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
+                    "document_id": str(document_id) if document_id else None,
+                    "organization_id": str(organization_id) if organization_id else None,
+                },
+                default=str,
+            )
+        )
+
     async def _generate_contextual_summaries(
         self,
         docs: List[Document],
         full_document_text: str,
+        document_id: UUID,
+        organization_id: UUID,
     ) -> List[Optional[str]]:
         """
         Phase 4: Contextual retrieval (Anthropic's technique - see
@@ -129,6 +162,12 @@ class RagIngestionService:
                             },
                         ],
                         messages=[{"role": "user", "content": f"<chunk>\n{chunk_text}\n</chunk>"}],
+                    )
+                    self._log_llm_usage(
+                        "ingestion_context",
+                        response,
+                        document_id=document_id,
+                        organization_id=organization_id,
                     )
                     summaries[i] = response.content[0].text.strip()
                 except Exception as e:
@@ -281,7 +320,7 @@ class RagIngestionService:
                 )
                 full_document_text = "\n\n".join(texts)
                 contextual_summaries = await self._generate_contextual_summaries(
-                    docs, full_document_text
+                    docs, full_document_text, document_id, organization_id
                 )
 
             # Stage 4: Generate embeddings

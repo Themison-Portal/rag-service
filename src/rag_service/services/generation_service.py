@@ -174,6 +174,7 @@ class RagGenerationService:
                 ],
             )
             condensed = response.content[0].text.strip()
+            self._log_llm_usage("query_condense", response)
             return condensed if condensed else new_question
         except Exception as e:
             logger.warning(f"[CONDENSE_QUERY] failed, using original question: {e}")
@@ -371,6 +372,37 @@ class RagGenerationService:
         }
         logger.info(json.dumps(trace, default=str))
 
+    def _log_llm_usage(
+        self,
+        call_type: str,
+        response: Any,
+        *,
+        document_id: Optional[UUID] = None,
+        organization_id: Optional[UUID] = None,
+        model: Optional[str] = None,
+    ) -> None:
+        """Structured log line per LLM call, for cost tracking. Separate from
+        _log_query_trace (which covers one full query) since usage needs to be
+        logged per LLM call - a single query can trigger more than one call
+        (condense + generate), and ingestion calls have no query trace at all."""
+        usage = getattr(response, "usage", None)
+        logger.info(
+            json.dumps(
+                {
+                    "event": "llm_usage",
+                    "call_type": call_type,
+                    "model": model or getattr(response, "model", None),
+                    "input_tokens": getattr(usage, "input_tokens", None),
+                    "output_tokens": getattr(usage, "output_tokens", None),
+                    "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
+                    "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
+                    "document_id": str(document_id) if document_id else None,
+                    "organization_id": str(organization_id) if organization_id else None,
+                },
+                default=str,
+            )
+        )
+
     async def generate_answer(
         self,
         query_text: str,
@@ -487,6 +519,12 @@ class RagGenerationService:
             )
 
             timing_info["llm_call_ms"] = (time.perf_counter() - llm_start) * 1000
+            self._log_llm_usage(
+                "query_generation",
+                response,
+                document_id=document_id,
+                organization_id=organization_id,
+            )
             logger.info(f"[TIMING] LLM call: {timing_info['llm_call_ms']:.2f}ms")
 
             raw_content = response.content[0].text
