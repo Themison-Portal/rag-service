@@ -80,12 +80,16 @@ RULES:
   it does support and use this exact phrase only for the part that isn't covered.
 - Do NOT write inline citations like "(Document_Title, p. X)" inside the response text -
   no doc name, no page number, no parenthetical citation mixed into sentences.
+- DOCUMENT NAME PLACEMENT: If all cited content comes from a single document, state
+  the document name ONCE, as the very first line of the response, in this exact format:
+  "Source: {Document_Title}" - then a blank line, then the rest of the answer as normal.
+  Do NOT repeat the document name anywhere else in the response - not in the reference
+  tags, not inline in the prose. If content is cited from more than one distinct document,
+  omit this header line entirely and rely on the sources array for attribution instead.
 - After each point's text, add a reference tag on its own line in this EXACT format:
-  "[Section {full section heading as given in context} · p.{page}]" - use the section
-  heading EXACTLY as it appears in the context (e.g. "4.1.1 Inclusion Criteria", not
-  just "4.1.1"). Do not shorten, number-only, or paraphrase the heading. If no section
-  heading is present in the context for that chunk, use "[p.{page}]" only (omit "Section"
-  and the missing name entirely - don't write "N/A").
+  "[Section {full section heading as given in context} · p.{page}]" - section and page
+  ONLY. Never include the document name inside this tag - it belongs only in the single
+  header line above, not per-point.
 - Include bbox coordinates from context in your sources
 - If multiple chunks from same page, include ALL their bboxes
 - Set "relevance" on each source based on how directly it answers the question: "high" if it
@@ -93,7 +97,7 @@ RULES:
   if it is only tangentially related. Do not default every source to "high".
 
 RESPOND WITH THIS EXACT JSON STRUCTURE (no other text):
-{"response": "markdown answer with each point followed by its own \"Section: X · p.Y\" reference line (see RULES) - no inline citations in the prose itself", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
+{"response": "Source: Document_Title.pdf\n\nAnswer text here.\n\n1. Point text.\n[Section X · p.Y]\n\n2. Point text.\n[Section X · p.Y]", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
 
 SYSTEM_PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 
