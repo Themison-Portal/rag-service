@@ -80,12 +80,24 @@ RULES:
   it does support and use this exact phrase only for the part that isn't covered.
 - Do NOT write inline citations like "(Document_Title, p. X)" inside the response text -
   no doc name, no page number, no parenthetical citation mixed into sentences.
+- CRITICAL - RESPONSE FIELD BOUNDARY: The "response" field must contain ONLY the answer
+  text (points + their reference tags). It must end immediately after the last point's
+  reference tag. NEVER append a sources table, a "| Sources |" line, JSON, or any
+  representation of the sources array inside "response" - the sources array belongs
+  ONLY in the separate "sources" field of the JSON object, never duplicated or
+  summarized inside "response" itself.
 - DOCUMENT NAME PLACEMENT: If all cited content comes from a single document, state
   the document name ONCE, as the very first line of the response, in this exact format:
   "Source: {Document_Title}" - then a blank line, then the rest of the answer as normal.
   Do NOT repeat the document name anywhere else in the response - not in the reference
   tags, not inline in the prose. If content is cited from more than one distinct document,
   omit this header line entirely and rely on the sources array for attribution instead.
+- DUPLICATE SECTION HANDLING: If the same information appears in more than one place in
+  the context (e.g. a synopsis/summary section AND the full numbered protocol section
+  covering the same criteria), always cite the full numbered section (e.g. "4.1.2
+  Exclusion Criteria"), never the synopsis/summary restating it — even if the synopsis
+  chunk was the one retrieved. If only the synopsis chunk is available in context for a
+  given item, cite it, but prefer the fuller numbered section whenever both are present.
 - After each point's text, add a reference tag on its own line in this EXACT format:
   "[Section {full section heading as given in context} · p.{page}]" - section and page
   ONLY. Never include the document name inside this tag - it belongs only in the single
@@ -353,6 +365,20 @@ class RagGenerationService:
             "sources": [],
         }
 
+    def _strip_trailing_sources_leak(self, response_text: str) -> str:
+        """
+        Defensive cleanup: occasionally the model appends a raw sources dump
+        (e.g. "| Sources | [{...}]") after the answer text instead of only
+        populating the separate sources field. Strip it if present, since
+        the JSON's own sources array is the correct place for this data.
+        """
+
+        marker = re.search(r"\n*\|?\s*Sources\s*\|", response_text)
+
+        if marker:
+            return response_text[: marker.start()].rstrip()
+        return response_text
+
     def _log_query_trace(
         self,
         query_text: str,
@@ -553,6 +579,7 @@ class RagGenerationService:
                 )
 
             parsed = self._parse_llm_json(raw_content)
+            parsed["response"] = self._strip_trailing_sources_leak(parsed.get("response", ""))
 
             if not parsed.get("sources"):
                 logger.warning(
