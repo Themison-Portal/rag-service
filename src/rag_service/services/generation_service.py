@@ -81,8 +81,11 @@ RULES:
 - Do NOT write inline citations like "(Document_Title, p. X)" inside the response text -
   no doc name, no page number, no parenthetical citation mixed into sentences.
 - After each point's text, add a reference tag on its own line in this EXACT format:
-  "[Section 4.1.1 · p.34]" - always wrapped in square brackets, section and page separated
-  by " · ", nothing else inside the brackets (no doc name).
+  "[Section {full section heading as given in context} · p.{page}]" - use the section
+  heading EXACTLY as it appears in the context (e.g. "4.1.1 Inclusion Criteria", not
+  just "4.1.1"). Do not shorten, number-only, or paraphrase the heading. If no section
+  heading is present in the context for that chunk, use "[p.{page}]" only (omit "Section"
+  and the missing name entirely - don't write "N/A").
 - Include bbox coordinates from context in your sources
 - If multiple chunks from same page, include ALL their bboxes
 - Set "relevance" on each source based on how directly it answers the question: "high" if it
@@ -276,6 +279,7 @@ class RagGenerationService:
         """Compact context format for reduced token usage."""
         title = chunk_meta.get("title", "Unknown")
         page = chunk_meta.get("page", 0)
+        section = chunk_meta.get("section")
         content = chunk_meta.get("content", "")
         contextual_summary = chunk_meta.get("contextual_summary")
 
@@ -284,8 +288,10 @@ class RagGenerationService:
         else:
             bbox_str = str(chunk_meta.get("bbox"))
 
+        section_str = f"|section:{section}" if section else ""
+
         body = f"{contextual_summary}\n{content}" if contextual_summary else content
-        return f"[{title}|p{page}|bbox:{bbox_str}]\n{body}"
+        return f"[{title}|p{page}{section_str}|bbox:{bbox_str}]\n{body}"
 
     def _repair_json(self, json_str: str) -> str:
         """Attempt to repair common JSON formatting issues."""
