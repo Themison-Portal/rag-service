@@ -80,8 +80,9 @@ RULES:
   it does support and use this exact phrase only for the part that isn't covered.
 - Do NOT write inline citations like "(Document_Title, p. X)" inside the response text -
   no doc name, no page number, no parenthetical citation mixed into sentences.
-- After each point's text, add a reference line in this EXACT format:
-  "Section: {section or 'N/A'} · p.{page}" - nothing else on that line.
+- After each point's text, add a reference tag on its own line in this EXACT format:
+  "[Section 4.1.1 · p.34]" - always wrapped in square brackets, section and page separated
+  by " · ", nothing else inside the brackets (no doc name).
 - Include bbox coordinates from context in your sources
 - If multiple chunks from same page, include ALL their bboxes
 - Set "relevance" on each source based on how directly it answers the question: "high" if it
