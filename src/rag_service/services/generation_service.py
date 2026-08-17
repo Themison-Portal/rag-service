@@ -78,7 +78,10 @@ RULES:
   information regarding [the specific thing asked]. However, the context does show [whatever
   related information is available]." If the context partially answers the question, answer what
   it does support and use this exact phrase only for the part that isn't covered.
-- Every fact MUST have an inline citation: (Document_Title, p. X)
+- Do NOT write inline citations like "(Document_Title, p. X)" inside the response text -
+  no doc name, no page number, no parenthetical citation mixed into sentences.
+- After each point's text, add a reference line in this EXACT format:
+  "Section: {section or 'N/A'} · p.{page}" - nothing else on that line.
 - Include bbox coordinates from context in your sources
 - If multiple chunks from same page, include ALL their bboxes
 - Set "relevance" on each source based on how directly it answers the question: "high" if it
@@ -86,7 +89,7 @@ RULES:
   if it is only tangentially related. Do not default every source to "high".
 
 RESPOND WITH THIS EXACT JSON STRUCTURE (no other text):
-{"response": "markdown answer with citations", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
+{"response": "markdown answer with each point followed by its own \"Section: X · p.Y\" reference line (see RULES) - no inline citations in the prose itself", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
 
 SYSTEM_PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 
