@@ -78,7 +78,30 @@ RULES:
   information regarding [the specific thing asked]. However, the context does show [whatever
   related information is available]." If the context partially answers the question, answer what
   it does support and use this exact phrase only for the part that isn't covered.
-- Every fact MUST have an inline citation: (Document_Title, p. X)
+- Do NOT write inline citations like "(Document_Title, p. X)" inside the response text -
+  no doc name, no page number, no parenthetical citation mixed into sentences.
+- CRITICAL - RESPONSE FIELD BOUNDARY: The "response" field must contain ONLY the answer
+  text (points + their reference tags). It must end immediately after the last point's
+  reference tag. NEVER append a sources table, a "| Sources |" line, JSON, or any
+  representation of the sources array inside "response" - the sources array belongs
+  ONLY in the separate "sources" field of the JSON object, never duplicated or
+  summarized inside "response" itself.
+- DOCUMENT NAME PLACEMENT: If all cited content comes from a single document, state
+  the document name ONCE, as the very first line of the response, in this exact format:
+  "Source: {Document_Title}" - then a blank line, then the rest of the answer as normal.
+  Do NOT repeat the document name anywhere else in the response - not in the reference
+  tags, not inline in the prose. If content is cited from more than one distinct document,
+  omit this header line entirely and rely on the sources array for attribution instead.
+- DUPLICATE SECTION HANDLING: If the same information appears in more than one place in
+  the context (e.g. a synopsis/summary section AND the full numbered protocol section
+  covering the same criteria), always cite the full numbered section (e.g. "4.1.2
+  Exclusion Criteria"), never the synopsis/summary restating it — even if the synopsis
+  chunk was the one retrieved. If only the synopsis chunk is available in context for a
+  given item, cite it, but prefer the fuller numbered section whenever both are present.
+- After each point's text, add a reference tag on its own line in this EXACT format:
+  "[Section {full section heading as given in context} · p.{page}]" - section and page
+  ONLY. Never include the document name inside this tag - it belongs only in the single
+  header line above, not per-point.
 - Include bbox coordinates from context in your sources
 - If multiple chunks from same page, include ALL their bboxes
 - Set "relevance" on each source based on how directly it answers the question: "high" if it
@@ -86,7 +109,7 @@ RULES:
   if it is only tangentially related. Do not default every source to "high".
 
 RESPOND WITH THIS EXACT JSON STRUCTURE (no other text):
-{"response": "markdown answer with citations", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
+{"response": "Source: Document_Title.pdf\n\nAnswer text here.\n\n1. Point text.\n[Section X · p.Y]\n\n2. Point text.\n[Section X · p.Y]", "sources": [{"name": "doc title", "page": 1, "section": "section or null", "exactText": "verbatim quote", "bboxes": [[x0,y0,x1,y1]], "relevance": "high"}]}"""
 
 SYSTEM_PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 
@@ -174,6 +197,7 @@ class RagGenerationService:
                 ],
             )
             condensed = response.content[0].text.strip()
+            self._log_llm_usage("query_condense", response)
             return condensed if condensed else new_question
         except Exception as e:
             logger.warning(f"[CONDENSE_QUERY] failed, using original question: {e}")
@@ -271,6 +295,7 @@ class RagGenerationService:
         """Compact context format for reduced token usage."""
         title = chunk_meta.get("title", "Unknown")
         page = chunk_meta.get("page", 0)
+        section = chunk_meta.get("section")
         content = chunk_meta.get("content", "")
         contextual_summary = chunk_meta.get("contextual_summary")
 
@@ -279,8 +304,10 @@ class RagGenerationService:
         else:
             bbox_str = str(chunk_meta.get("bbox"))
 
+        section_str = f"|section:{section}" if section else ""
+
         body = f"{contextual_summary}\n{content}" if contextual_summary else content
-        return f"[{title}|p{page}|bbox:{bbox_str}]\n{body}"
+        return f"[{title}|p{page}{section_str}|bbox:{bbox_str}]\n{body}"
 
     def _repair_json(self, json_str: str) -> str:
         """Attempt to repair common JSON formatting issues."""
@@ -338,6 +365,20 @@ class RagGenerationService:
             "sources": [],
         }
 
+    def _strip_trailing_sources_leak(self, response_text: str) -> str:
+        """
+        Defensive cleanup: occasionally the model appends a raw sources dump
+        (e.g. "| Sources | [{...}]") after the answer text instead of only
+        populating the separate sources field. Strip it if present, since
+        the JSON's own sources array is the correct place for this data.
+        """
+
+        marker = re.search(r"\n*\|?\s*Sources\s*\|", response_text)
+
+        if marker:
+            return response_text[: marker.start()].rstrip()
+        return response_text
+
     def _log_query_trace(
         self,
         query_text: str,
@@ -370,6 +411,37 @@ class RagGenerationService:
             "timing": timing_info,
         }
         logger.info(json.dumps(trace, default=str))
+
+    def _log_llm_usage(
+        self,
+        call_type: str,
+        response: Any,
+        *,
+        document_id: Optional[UUID] = None,
+        organization_id: Optional[UUID] = None,
+        model: Optional[str] = None,
+    ) -> None:
+        """Structured log line per LLM call, for cost tracking. Separate from
+        _log_query_trace (which covers one full query) since usage needs to be
+        logged per LLM call - a single query can trigger more than one call
+        (condense + generate), and ingestion calls have no query trace at all."""
+        usage = getattr(response, "usage", None)
+        logger.info(
+            json.dumps(
+                {
+                    "event": "llm_usage",
+                    "call_type": call_type,
+                    "model": model or getattr(response, "model", None),
+                    "input_tokens": getattr(usage, "input_tokens", None),
+                    "output_tokens": getattr(usage, "output_tokens", None),
+                    "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
+                    "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
+                    "document_id": str(document_id) if document_id else None,
+                    "organization_id": str(organization_id) if organization_id else None,
+                },
+                default=str,
+            )
+        )
 
     async def generate_answer(
         self,
@@ -487,6 +559,12 @@ class RagGenerationService:
             )
 
             timing_info["llm_call_ms"] = (time.perf_counter() - llm_start) * 1000
+            self._log_llm_usage(
+                "query_generation",
+                response,
+                document_id=document_id,
+                organization_id=organization_id,
+            )
             logger.info(f"[TIMING] LLM call: {timing_info['llm_call_ms']:.2f}ms")
 
             raw_content = response.content[0].text
@@ -501,6 +579,7 @@ class RagGenerationService:
                 )
 
             parsed = self._parse_llm_json(raw_content)
+            parsed["response"] = self._strip_trailing_sources_leak(parsed.get("response", ""))
 
             if not parsed.get("sources"):
                 logger.warning(
