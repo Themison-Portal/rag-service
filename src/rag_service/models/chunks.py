@@ -1,15 +1,14 @@
 """
 Document chunk model for storing embeddings with pgvector.
 """
+
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, List
-
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON, Column, Computed, DateTime, Index, Integer, Text
+from sqlalchemy import JSON, Column, Computed, DateTime, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID, TSVECTOR
 from sqlalchemy.orm import Mapped
-
 from .base import Base
 
 
@@ -18,8 +17,8 @@ class DocumentChunkDocling(Base):
     A model representing a document chunk with embedding.
     Uses pgvector for efficient similarity search.
     """
-    __tablename__ = 'document_chunks_docling'
 
+    __tablename__ = "document_chunks_docling"
     id: Mapped[UUID] = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     document_id: Mapped[UUID] = Column(UUID(as_uuid=True), nullable=False)
     organization_id: Mapped[UUID] = Column(UUID(as_uuid=True), nullable=False)
@@ -28,32 +27,39 @@ class DocumentChunkDocling(Base):
     chunk_metadata: Mapped[Dict] = Column("chunk_metadata", JSON)
     embedding: Mapped[List[float]] = Column(Vector(1536))
     created_at: Mapped[datetime] = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
     # Phase 1: Hybrid search - tsvector for BM25 full-text search
     content_tsv = Column(TSVECTOR, Computed("to_tsvector('english', content)", persisted=True))
-
     # Phase 3: Larger embedding model (2000 dimensions - HNSW index limit)
     embedding_large: Mapped[List[float]] = Column(Vector(2000), nullable=True)
-
     # Phase 4: Contextual retrieval
     contextual_summary: Mapped[str] = Column(Text, nullable=True)
-
+    # Phase 5: content hash for re-ingestion dedup. Column already exists in
+    # the DB (added via new-platform-backend's Alembic migration
+    # 4c6ccf7ca92c) - this just maps it in rag-service's own copy of the
+    # model, since the two repos maintain separate model classes for the
+    # same table.
+    content_hash: Mapped[str] = Column(String(64), nullable=True)
     __table_args__ = (
         Index(
-            'idx_chunks_embedding_hnsw',
-            'embedding',
-            postgresql_using='hnsw',
-            postgresql_with={'m': 16, 'ef_construction': 64},
-            postgresql_ops={'embedding': 'vector_cosine_ops'}
+            "idx_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
-        Index('idx_chunks_document_id', 'document_id'),
-        Index('idx_chunks_organization_id', 'organization_id'),
-        Index('idx_chunks_content_gin', 'content_tsv', postgresql_using='gin'),
+        Index("idx_chunks_document_id", "document_id"),
+        Index("idx_chunks_organization_id", "organization_id"),
+        Index("idx_chunks_content_gin", "content_tsv", postgresql_using="gin"),
         Index(
-            'idx_chunks_embedding_large_hnsw',
-            'embedding_large',
-            postgresql_using='hnsw',
-            postgresql_with={'m': 16, 'ef_construction': 64},
-            postgresql_ops={'embedding_large': 'vector_cosine_ops'}
+            "idx_chunks_embedding_large_hnsw",
+            "embedding_large",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding_large": "vector_cosine_ops"},
         ),
+        # idx_chunks_content_hash already exists in the DB (same migration)
+        # but is NOT declared here in __table_args__, matching this file's
+        # existing style of only declaring indexes it needs to know about
+        # for query planning hints - safe to omit, Postgres already has it.
+        Index("idx_chunks_content_hash", "content_hash"),
     )
