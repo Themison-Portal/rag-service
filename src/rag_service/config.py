@@ -68,6 +68,7 @@ class Settings(BaseSettings):
     llm_model: str = "claude-sonnet-4-6"
     # llm_max_tokens: int = 2000
     llm_max_tokens: int = 10000
+    chunk_overlap_tokens: int = 150
 
     class Config:
         env_file = ".env"

@@ -71,6 +71,24 @@ class RagIngestionService:
         """Hash raw (pre-overlap) chunk content for re-ingestion dedup."""
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
+    def _apply_overlap(self, texts: List[str], tokenizer, overlap_tokens: int) -> List[str]:
+        """
+        Prepend the tail of the previous chunk's raw text to each chunk,
+        for EMBEDDING ONLY. Does not affect what's hashed (Point 3) or
+        what's stored as `content` (citations/exactText matching need the
+        unprefixed text) - both of those stay on the original `texts` list.
+        """
+        if overlap_tokens <= 0 or len(texts) <= 1:
+            return list(texts)
+
+        overlapped = [texts[0]]
+        for i in range(1, len(texts)):
+            prev_tokens = tokenizer.encode(texts[i - 1], add_special_tokens=False)
+            tail_tokens = prev_tokens[-overlap_tokens:]
+            tail_text = tokenizer.decode(tail_tokens)
+            overlapped.append(f"{tail_text}\n{texts[i]}")
+        return overlapped
+
     async def _fetch_existing_chunk_cache(self, document_id: UUID) -> dict:
         """
         Map content_hash -> (embedding, contextual_summary) for chunks
@@ -355,6 +373,9 @@ class RagIngestionService:
 
             yield IngestionProgress("CHUNKING", 50, f"Created {len(docs)} chunks...")
 
+            # NEW: overlap applied separately, texts stays raw for hashing/citations
+            overlap_texts = self._apply_overlap(texts, tokenizer, settings.chunk_overlap_tokens)
+
             # Stage 3.4 (POINT 3, NEW): hash chunks, determine which are
             # unchanged vs new relative to the previous ingestion.
             chunk_hashes = [self._hash_chunk(t) for t in texts]
@@ -393,7 +414,7 @@ class RagIngestionService:
             )
 
             texts_to_embed_all = [
-                f"{s}\n\n{t}" if s else t for s, t in zip(contextual_summaries, texts)
+                f"{s}\n\n{t}" if s else t for s, t in zip(contextual_summaries, overlap_texts)
             ]
             new_indices = [i for i, r in enumerate(reuse_mask) if not r]
             new_texts_to_embed = [texts_to_embed_all[i] for i in new_indices]
