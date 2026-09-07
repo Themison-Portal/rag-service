@@ -632,7 +632,10 @@ class RagGenerationService:
             result = {
                 "response": parsed.get("response", ""),
                 "sources": sources,
+                "debug_context": [c.get("content", "") for c in compressed_chunks],
             }
+            # if settings.eval_mode:  # or an explicit include_context param
+            #     result["debug_context"] = [c.get("content", "") for c in compressed_chunks]
 
         except Exception as e:
             logger.error(f"[ERROR] Claude API call failed: {e}")
