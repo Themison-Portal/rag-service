@@ -1,0 +1,402 @@
+[
+  {
+    "id": 1,
+    "category": "Factual",
+    "question": "What is the primary endpoint of the study?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Clinical and endoscopic remission at Week 12 (full Mayo score ≤2, no individual subscore >1, rectal bleeding subscore = 0); plus adverse events, vital signs, 12-lead ECG, and clinical safety lab abnormalities.",
+    "source": "p.7 Synopsis – Endpoints"
+  },
+  {
+    "id": 2,
+    "category": "Factual",
+    "question": "What is the investigational medicinal product?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "TJ301 (FE 999301, Olamkicept), 15 mg/mL solution for injection.",
+    "source": "p.1 / p.12"
+  },
+  {
+    "id": 3,
+    "category": "Factual",
+    "question": "What is the indication for this study?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Active ulcerative colitis.",
+    "source": "p.1 / p.6"
+  },
+  {
+    "id": 4,
+    "category": "Factual",
+    "question": "What phase is this trial?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Phase 2.",
+    "source": "p.6 Synopsis"
+  },
+  {
+    "id": 5,
+    "category": "Factual",
+    "question": "How many patients will be randomised and in what ratio?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "90 patients, 1:1:1, to 600 mg TJ301 Q2W, 300 mg TJ301 Q2W, or placebo Q2W.",
+    "source": "p.8 Study Design"
+  },
+  {
+    "id": 6,
+    "category": "Factual",
+    "question": "What is the dosing schedule of the study drug?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "600 mg or 300 mg TJ301 (or placebo) every 2 weeks (Q2W), administered on Days 0, 14, 28, 42, 56, and 70.",
+    "source": "p.8"
+  },
+  {
+    "id": 7,
+    "category": "Factual",
+    "question": "How is randomisation stratified in this study?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "By prior corticosteroids treatment (yes/no) and consent to participate in the PK substudy (yes/no).",
+    "source": "p.8 / p.36 (CURRENT v1.1)"
+  },
+  {
+    "id": 8,
+    "category": "Factual",
+    "question": "What is the eligible age range for patients?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "18–70 years of age (inclusive).",
+    "source": "p.10 Inclusion #1"
+  },
+  {
+    "id": 9,
+    "category": "Factual",
+    "question": "What are the study periods and their durations?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Run-in period (if needed), 4-week Screening, 12-week Treatment, and 3-week Safety Follow-up to Day 105.",
+    "source": "p.8"
+  },
+  {
+    "id": 10,
+    "category": "Factual",
+    "question": "How many site visits are there and what are they?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "9–10 main visits: Visit 0 (run-in, optional), Visit 1 (screening), Visit 2 (randomisation/baseline), Visits 3–7 (treatment), Visit 8 (End of Treatment, Week 12), Visit 9 (safety follow-up, Day 105).",
+    "source": "p.8–9"
+  },
+  {
+    "id": 11,
+    "category": "Factual",
+    "question": "What is the infusion time for the study drug?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "2 hours.",
+    "source": "p.12"
+  },
+  {
+    "id": 12,
+    "category": "Factual",
+    "question": "How is the study drug stored and prepared?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Stored at -20±5°C, thawed at site, and diluted in 250 mL 5% (w/v) glucose.",
+    "source": "p.12"
+  },
+  {
+    "id": 13,
+    "category": "Factual",
+    "question": "What is the planned sample size and statistical power?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "N=72 (24 per arm) for 83% power to detect a 30% remission difference (10% placebo vs 40% highest dose), Pearson chi-square, one-sided p<0.05. (90 randomised.)",
+    "source": "p.12 Statistical Methods"
+  },
+  {
+    "id": 14,
+    "category": "Factual",
+    "question": "In which countries is the trial being conducted?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Mainland China, Taiwan, Republic of Korea, and Australia.",
+    "source": "p.6 (Germany removed in v1.1)"
+  },
+  {
+    "id": 15,
+    "category": "Factual",
+    "question": "What is the definition of clinical and endoscopic remission?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "Full Mayo score ≤2, with no individual subscore >1 and a rectal bleeding subscore = 0.",
+    "source": "p.7"
+  },
+  {
+    "id": 16,
+    "category": "Factual",
+    "question": "What is the size of the PK subgroup and where is it based?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "24 patients (8 per arm) in Mainland China.",
+    "source": "p.9"
+  },
+  {
+    "id": 17,
+    "category": "Completeness",
+    "question": "What are all the secondary endpoints?",
+    "expected_behaviour": "Answer (full list)",
+    "expected_answer": "Clinical & endoscopic response (W12); clinical remission (W4–12); clinical response (W4–12); mucosal healing (Mayo endoscopic subscore 0/1 at W12); changes in 9-point partial, full, and modified Mayo scores; PGA changes; FDA-defined remission (W12); immunogenicity (anti-TJ301 antibodies); PK parameters; peak & trough TJ301 concentration.",
+    "source": "p.7"
+  },
+  {
+    "id": 18,
+    "category": "Completeness",
+    "question": "What are the key inclusion criteria?",
+    "expected_behaviour": "Answer (full list)",
+    "expected_answer": "Age 18–70; active UC confirmed by colonoscopy/sigmoidoscopy with biopsy extending >15 cm past anal verge; full Mayo ≥5 with rectal bleeding subscore ≥1; endoscopy subscore ≥2; on stable conventional non-biologic therapy; contraception; able to complete Patient Diary; signed ICF.",
+    "source": "p.10"
+  },
+  {
+    "id": 19,
+    "category": "Completeness",
+    "question": "What are the main exclusion criteria?",
+    "expected_behaviour": "Answer (full list)",
+    "expected_answer": "Pregnancy/breastfeeding; allergy to TJ301; colectomy history; Crohn's/other colitis; anaemia (Hb<9)/thrombocytopenia/creatinine>2; autoimmune disease (except Sjögren's/hypothyroidism); C. difficile; chronic liver disease; hepatitis B/C, HIV; active/latent TB; recent live vaccines/IV corticosteroids/immunosuppressants; etc.",
+    "source": "p.10–12"
+  },
+  {
+    "id": 20,
+    "category": "Completeness",
+    "question": "What exploratory biomarkers are measured in this study?",
+    "expected_behaviour": "Answer (full list)",
+    "expected_answer": "ESR, C-reactive protein (CRP), IL-6, IL-6/sIL-6R complex, neutrophil and platelet count, and faecal calprotectin.",
+    "source": "p.7"
+  },
+  {
+    "id": 21,
+    "category": "Completeness",
+    "question": "What assessments are performed at the Week 12 (End of Treatment) visit?",
+    "expected_behaviour": "Answer (full list)",
+    "expected_answer": "Disease activity assessment plus endoscopy (colonoscopy or sigmoidoscopy) with mucosal biopsies for mucosal healing, histology, and immunohistochemistry.",
+    "source": "p.9"
+  },
+  {
+    "id": 22,
+    "category": "Version",
+    "question": "How is CRP used for stratification in this study?",
+    "expected_behaviour": "Answer — CURRENT only",
+    "expected_answer": "TRAP: CRP is NOT a current stratification factor. It is an exploratory biomarker only. Stratification is by prior corticosteroids treatment and PK-substudy consent. CRP-based stratification (≥3 mg/L) was in the SUPERSEDED v1.0. A correct answer gives the current factors and/or labels the CRP version as historical.",
+    "source": "Current: p.7/p.8 | Historical: p.92 Appendix 4"
+  },
+  {
+    "id": 23,
+    "category": "Version",
+    "question": "What are the current randomisation stratification factors?",
+    "expected_behaviour": "Answer — CURRENT only",
+    "expected_answer": "Prior corticosteroids treatment (yes/no) and consent to participate in the PK substudy (yes/no). Must NOT return the CRP version.",
+    "source": "p.8 / p.36"
+  },
+  {
+    "id": 24,
+    "category": "Version",
+    "question": "What changed in the randomisation stratification between protocol versions?",
+    "expected_behaviour": "Answer (historical, labelled)",
+    "expected_answer": "Changed from 'elevated (≥3 mg/L) CRP levels and stable conventional treatment' (v1.0) to 'prior corticosteroids treatment and PK-substudy consent' (v1.1).",
+    "source": "p.90 / p.92 Appendix 4"
+  },
+  {
+    "id": 25,
+    "category": "Version",
+    "question": "Which countries changed between protocol versions?",
+    "expected_behaviour": "Answer (historical, labelled)",
+    "expected_answer": "Germany was removed and Australia added in v1.1.",
+    "source": "p.90 / p.92 Appendix 4"
+  },
+  {
+    "id": 26,
+    "category": "Version",
+    "question": "What is the name of the safety committee in the current protocol?",
+    "expected_behaviour": "Answer — CURRENT only",
+    "expected_answer": "Safety Review Committee (SRC). Renamed from DSMC in v1.1.",
+    "source": "p.93 Appendix 4"
+  },
+  {
+    "id": 27,
+    "category": "Version",
+    "question": "What does CRP refer to and how is it used in this protocol?",
+    "expected_behaviour": "Answer",
+    "expected_answer": "C-Reactive Protein; used as an exploratory biomarker measured at local sites — not a stratification factor in the current protocol.",
+    "source": "p.7 / p.18 / p.85"
+  },
+  {
+    "id": 28,
+    "category": "Unanswerable",
+    "question": "What is the prevalence of ulcerative colitis in China?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 29,
+    "category": "Unanswerable",
+    "question": "When was Olamkicept (TJ301) first discovered?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 30,
+    "category": "Unanswerable",
+    "question": "How much does the study drug cost?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 31,
+    "category": "Unanswerable",
+    "question": "What were the results of the trial?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol (this is a protocol, not a results report).",
+    "source": "—"
+  },
+  {
+    "id": 32,
+    "category": "Unanswerable",
+    "question": "Which site recruited the most patients?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 33,
+    "category": "Unanswerable",
+    "question": "What is the FDA approval status of TJ301?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 34,
+    "category": "Unanswerable",
+    "question": "What is the molecular mechanism of action of TJ301?",
+    "expected_behaviour": "Refuse / 'not in this document'",
+    "expected_answer": "Not in this protocol (would be in the Investigator's Brochure).",
+    "source": "—"
+  },
+  {
+    "id": 35,
+    "category": "Unanswerable",
+    "question": "How many patients have been enrolled so far?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 36,
+    "category": "Unanswerable",
+    "question": "What is the sponsor's annual revenue?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 37,
+    "category": "Unanswerable",
+    "question": "Which competing ulcerative colitis drugs are on the market?",
+    "expected_behaviour": "Refuse / 'not in document'",
+    "expected_answer": "Not in the protocol.",
+    "source": "—"
+  },
+  {
+    "id": 38,
+    "category": "Ambiguous",
+    "question": "Can you be more specific?",
+    "expected_behaviour": "Clarify",
+    "expected_answer": "Standalone — system has nothing to be specific about; should ask what about.",
+    "source": "—"
+  },
+  {
+    "id": 39,
+    "category": "Ambiguous",
+    "question": "What about corticosteroids?",
+    "expected_behaviour": "Clarify",
+    "expected_answer": "Could mean inclusion criteria, exclusion criteria, stratification, or dosing — should ask which.",
+    "source": "—"
+  },
+  {
+    "id": 40,
+    "category": "Ambiguous",
+    "question": "Tell me about CRP.",
+    "expected_behaviour": "Clarify / current + note",
+    "expected_answer": "Could mean the exploratory biomarker or the historical stratification — should clarify or give current use and note the historical.",
+    "source": "—"
+  },
+  {
+    "id": 41,
+    "category": "Ambiguous",
+    "question": "What are the requirements?",
+    "expected_behaviour": "Clarify",
+    "expected_answer": "Could mean eligibility, site, or visit requirements — should ask which.",
+    "source": "—"
+  },
+  {
+    "id": 42,
+    "category": "Ambiguous",
+    "question": "What is the dose?",
+    "expected_behaviour": "Clarify / give both",
+    "expected_answer": "Two active arms (300 mg, 600 mg) — should give both or ask which.",
+    "source": "—"
+  },
+  {
+    "id": 43,
+    "category": "Follow-up",
+    "question": "(1) What is the primary endpoint?  →  (2) And when is it assessed?",
+    "expected_behaviour": "Answer (2) using (1)'s context",
+    "expected_answer": "Week 12.",
+    "source": "p.7"
+  },
+  {
+    "id": 44,
+    "category": "Follow-up",
+    "question": "(1) How is the drug dosed?  →  (2) On which days?",
+    "expected_behaviour": "Answer (2) using (1)'s context",
+    "expected_answer": "Days 0, 14, 28, 42, 56, and 70.",
+    "source": "p.8"
+  },
+  {
+    "id": 45,
+    "category": "Follow-up",
+    "question": "(1) What are the inclusion criteria?  →  (2) Which of those relate to prior treatment?",
+    "expected_behaviour": "Answer (2) using (1)'s context",
+    "expected_answer": "The requirement to be on stable conventional non-biologic therapy (corticosteroids / 5-ASA / AZA or 6-MP).",
+    "source": "p.10 Inclusion #5"
+  },
+  {
+    "id": 46,
+    "category": "Follow-up",
+    "question": "(1) What are the stratification factors?  →  (2) Can you be more specific about the second one?",
+    "expected_behaviour": "Answer (2) using (1)'s context",
+    "expected_answer": "Consent to participate in the PK substudy (yes/no).",
+    "source": "p.8"
+  },
+  {
+    "id": 47,
+    "category": "Out-of-scope",
+    "question": "Why was prior corticosteroid use chosen as a stratification factor?",
+    "expected_behaviour": "Track (not built)",
+    "expected_answer": "Reasoning/'why' — not designed to answer.",
+    "source": "—"
+  },
+  {
+    "id": 48,
+    "category": "Out-of-scope",
+    "question": "Which visits require an ECG?",
+    "expected_behaviour": "Track (not built)",
+    "expected_answer": "Aggregation across the schedule of assessments — not designed to answer.",
+    "source": "—"
+  },
+  {
+    "id": 49,
+    "category": "Out-of-scope",
+    "question": "What fields should the eCRF include based on this protocol?",
+    "expected_behaviour": "Track (not built)",
+    "expected_answer": "Aggregation/derivation — not designed to answer.",
+    "source": "—"
+  },
+  {
+    "id": 50,
+    "category": "Out-of-scope",
+    "question": "Which countries are likely to recruit patients fastest?",
+    "expected_behaviour": "Track (not built)",
+    "expected_answer": "External/operational knowledge — not in the protocol.",
+    "source": "—"
+  }
+]
