@@ -1,0 +1,40 @@
+"""
+evals/refusal_phrase_metric.py
+
+Deterministic replacement for an LLM-judged "did it refuse" check.
+SYSTEM_PROMPT in generation_service.py contractually guarantees the
+literal substring "I don't have this information" whenever the context
+doesn't support an answer — so this is a string match, not a judgment
+call, and shouldn't cost an LLM call or introduce judge variance.
+"""
+
+from deepeval.metrics import BaseMetric
+from deepeval.test_case import LLMTestCase
+
+REFUSAL_PHRASE = "I don't have this information"
+
+
+class RefusalPhraseMetric(BaseMetric):
+    """Passes iff REFUSAL_PHRASE appears verbatim in actual_output."""
+
+    def __init__(self, threshold: float = 1.0):
+        self.threshold = threshold
+        self.name = "RefusalPhrasePresent"
+
+    def measure(self, test_case: LLMTestCase) -> float:
+        found = REFUSAL_PHRASE in (test_case.actual_output or "")
+        self.score = 1.0 if found else 0.0
+        self.success = found
+        self.reason = (
+            f"Found exact phrase '{REFUSAL_PHRASE}'."
+            if found
+            else f"Expected the exact phrase '{REFUSAL_PHRASE}' in the response; not found. "
+            f"Got: {test_case.actual_output!r}"
+        )
+        return self.score
+
+    async def a_measure(self, test_case: LLMTestCase, *args, **kwargs) -> float:
+        return self.measure(test_case)
+
+    def is_successful(self) -> bool:
+        return bool(self.success)

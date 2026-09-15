@@ -1,0 +1,47 @@
+RAG Fix - Step 1: Logging
+==========================
+
+What we did
+------------
+Added logging so every question asked to the RAG system now saves:
+- the question
+- which document chunks it pulled
+- the final answer
+- how long each step took
+
+No behavior changed - this is just so we can see what's happening and compare before/after once we start fixing things.
+
+Test we ran
+------------
+Document: Protocol_Ulcerative Colitis.pdf
+Question: "How was CRP used for stratification in this protocol"
+
+(This is one of the actual questions the customer asked that went wrong before.)
+
+What the system answered
+--------------------------
+It correctly said CRP was used for stratification in the OLD version of the
+protocol (v1.0), but was removed and replaced in v1.1 with different
+criteria (prior corticosteroid treatment + PK substudy consent). It also
+noted CRP is still tracked as an exploratory measure.
+
+It clearly separated old vs current info instead of mixing them up like it
+did with the customer. Good sign - but the actual bug fix (Step 2) hasn't
+happened yet, so we should re-test this.
+
+Speed
+------
+Total time: ~24 seconds
+- Finding the right document chunks: ~1 second
+- Generating the answer (Claude): ~21 seconds  <- this is the slow part
+
+What's logged and confirmed working
+--------------------------------------
+- Normal questions with real answers
+- Questions with no matching content
+- Repeated questions served from cache
+
+Next
+-----
+Step 2: fix the bug where weak/irrelevant matches aren't being filtered
+out properly. Then re-run this same question and compare.

@@ -27,6 +27,7 @@ class SemanticCacheResponse(Base):
     query_text: Mapped[str] = Column(Text, nullable=False)
     query_embedding: Mapped[List[float]] = Column(Vector(1536), nullable=False)
     document_id: Mapped[UUID] = Column(UUID(as_uuid=True), nullable=False)
+    organization_id: Mapped[UUID] = Column(UUID(as_uuid=True), nullable=False)
     response_data: Mapped[Dict] = Column(JSON, nullable=False)
     hit_count: Mapped[int] = Column(Integer, default=0)
     created_at: Mapped[datetime] = Column(
@@ -48,6 +49,7 @@ class SemanticCacheResponse(Base):
             postgresql_ops={'query_embedding': 'vector_cosine_ops'}
         ),
         Index('idx_semantic_cache_document_id', 'document_id'),
+        Index('idx_semantic_cache_organization_id', 'organization_id'),
     )
 
     def __repr__(self) -> str:

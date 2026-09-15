@@ -1,6 +1,7 @@
 """
 RAG Retrieval Service - Vector search and hybrid retrieval.
 """
+
 import asyncio
 import logging
 import time
@@ -9,6 +10,7 @@ from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from rag_service.services.reranker import RerankerService
 
 from rag_service.clients.openai_client import get_embedding_client
 from rag_service.config import get_settings
@@ -26,6 +28,7 @@ class RagRetrievalService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.embedding_client = get_embedding_client()
+        self.reranker = RerankerService()
 
     def _embedding_to_pg_vector(self, emb: List[float]) -> str:
         """Convert Python list of floats to PostgreSQL vector format."""
@@ -50,6 +53,7 @@ class RagRetrievalService:
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = 20,
         precomputed_embedding: Optional[List[float]] = None,
     ) -> Tuple[List[dict], dict]:
@@ -68,29 +72,44 @@ class RagRetrievalService:
 
         query_vector_str = self._embedding_to_pg_vector(query_vector)
 
+        # NOTE (Phase 4 - contextual retrieval): contextual_summary is
+        # selected here so it survives into the chunk dict returned to
+        # generation_service, which prepends it to the chunk before it goes
+        # into the LLM prompt. It's populated at ingest time (see
+        # ingestion_service._generate_contextual_summaries) and is NULL for
+        # documents ingested before contextual_retrieval_enabled was on, or
+        # for any chunk whose summary generation failed - both cases are
+        # handled downstream (falls back to plain content, no prepend).
         sql = text("""
             SELECT
                 pc.content,
                 pc.page_number,
                 pc.chunk_metadata,
+                pc.contextual_summary,
                 1 - (pc.embedding <=> (:v)::vector) AS similarity
             FROM document_chunks_docling pc
             WHERE pc.document_id = :pid
+            AND pc.organization_id = :org_id
             ORDER BY pc.embedding <=> (:v)::vector
             LIMIT :k
         """)
 
         db_start = time.perf_counter()
-        result = await self.db.execute(sql, {"v": query_vector_str, "k": top_k, "pid": document_id})
+        result = await self.db.execute(
+            sql, {"v": query_vector_str, "k": top_k, "pid": document_id, "org_id": organization_id}
+        )
         rows = result.fetchall()
         timing_info["db_search_ms"] = (time.perf_counter() - db_start) * 1000
 
-        logger.info(f"[TIMING] Vector search: {timing_info['db_search_ms']:.2f}ms, found {len(rows)} chunks")
+        logger.info(
+            f"[TIMING] Vector search: {timing_info['db_search_ms']:.2f}ms, found {len(rows)} chunks"
+        )
 
         docs = [
             {
                 "page_content": row.content,
                 "score": float(row.similarity),
+                "contextual_summary": row.contextual_summary,
                 "metadata": {
                     "title": document_name,
                     "page": row.page_number,
@@ -107,7 +126,8 @@ class RagRetrievalService:
         query_text: str,
         document_id: UUID,
         document_name: str,
-        top_k: int = 20
+        organization_id: UUID,
+        top_k: int = 20,
     ) -> List[dict]:
         """
         Full-text BM25 search using PostgreSQL tsvector.
@@ -118,16 +138,20 @@ class RagRetrievalService:
                 pc.content,
                 pc.page_number,
                 pc.chunk_metadata,
+                pc.contextual_summary,
                 ts_rank(pc.content_tsv, plainto_tsquery('english', :query)) AS bm25_score
             FROM document_chunks_docling pc
             WHERE pc.document_id = :pid
+              AND pc.organization_id = :org_id
               AND pc.content_tsv @@ plainto_tsquery('english', :query)
             ORDER BY bm25_score DESC
             LIMIT :k
         """)
 
         db_start = time.perf_counter()
-        result = await self.db.execute(sql, {"query": query_text, "k": top_k, "pid": document_id})
+        result = await self.db.execute(
+            sql, {"query": query_text, "k": top_k, "pid": document_id, "org_id": organization_id}
+        )
         rows = result.fetchall()
         bm25_time = (time.perf_counter() - db_start) * 1000
 
@@ -138,6 +162,7 @@ class RagRetrievalService:
                 "id": str(row.id),
                 "page_content": row.content,
                 "score": float(row.bm25_score),
+                "contextual_summary": row.contextual_summary,
                 "metadata": {
                     "title": document_name,
                     "page": row.page_number,
@@ -149,10 +174,7 @@ class RagRetrievalService:
         return docs
 
     def _reciprocal_rank_fusion(
-        self,
-        vector_results: List[dict],
-        bm25_results: List[dict],
-        k: int = 60
+        self, vector_results: List[dict], bm25_results: List[dict], k: int = 60
     ) -> List[dict]:
         """
         Combine vector and BM25 results using Reciprocal Rank Fusion (RRF).
@@ -194,14 +216,98 @@ class RagRetrievalService:
             doc["rrf_score"] = rrf_scores[doc_id]
             fused_results.append(doc)
 
-        logger.info(f"[HYBRID] RRF fusion: {len(vector_results)} vector + {len(bm25_results)} BM25 -> {len(fused_results)} merged")
+        logger.info(
+            f"[HYBRID] RRF fusion: {len(vector_results)} vector + {len(bm25_results)} BM25 -> {len(fused_results)} merged"
+        )
         return fused_results
+
+    def _apply_confidence_filter(
+        self, chunks: list, min_score: float, min_bm25_score: float = None
+    ) -> tuple:
+        """
+        STEP 2 FIX (vector) + STEP 2b (bm25): filters out weak matches.
+
+        Vector-sourced chunks: filtered on vector_score (real cosine similarity,
+        min_score is calibrated against this scale).
+
+        BM25-only chunks (no vector_score - keyword match the vector search
+        missed): ts_rank isn't on a comparable scale to min_score, so it's
+        min-max normalized within this result set first, then compared to
+        min_bm25_score. If min_bm25_score is None (not yet empirically
+        derived), BM25-only chunks are kept and just logged, not dropped -
+        this is intentional "observe mode" until real score distributions
+        are reviewed and a defensible threshold is set, the same way
+        min_score was validated against real vector_score data.
+        """
+        # Normalize BM25 scores within this result set first.
+        bm25_vals = [c.get("bm25_score") for c in chunks if c.get("bm25_score") is not None]
+        if bm25_vals:
+            max_v, min_v = max(bm25_vals), min(bm25_vals)
+            range_v = max_v - min_v or 1e-9
+            for c in chunks:
+                if c.get("bm25_score") is not None:
+                    c["bm25_score_normalized"] = (c["bm25_score"] - min_v) / range_v
+
+        kept, dropped = [], []
+        for c in chunks:
+            vector_score = c.get("vector_score")
+            bm25_norm = c.get("bm25_score_normalized")
+
+            if vector_score is not None:
+                passes = vector_score >= min_score
+            elif bm25_norm is not None and min_bm25_score is not None:
+                passes = bm25_norm >= min_bm25_score
+            else:
+                # No vector score, and either no BM25 score or no threshold
+                # set yet - can't responsibly drop something we can't score.
+                passes = True
+
+            (kept if passes else dropped).append(c)
+
+        if dropped:
+            logger.info(
+                f"[CONFIDENCE_FILTER] dropped {len(dropped)}/{len(chunks)} chunks "
+                f"below thresholds (vector min_score={min_score}, bm25 min_score={min_bm25_score}) "
+                f"(dropped vector_scores={[round(c.get('vector_score', 0), 4) for c in dropped if c.get('vector_score') is not None]}, "
+                f"dropped bm25_scores_normalized={[round(c.get('bm25_score_normalized', 0), 4) for c in dropped if c.get('bm25_score_normalized') is not None]})"
+            )
+
+        bm25_only_scores = [
+            round(c.get("bm25_score_normalized"), 4)
+            for c in chunks
+            if c.get("vector_score") is None and c.get("bm25_score_normalized") is not None
+        ]
+        if bm25_only_scores:
+            logger.info(
+                f"[BM25_SCORE_OBSERVE] normalized scores for BM25-only chunks: {bm25_only_scores}"
+            )
+
+        return kept, {
+            "confidence_filter_applied": True,
+            "confidence_filter_threshold": min_score,
+            "confidence_filter_bm25_threshold": min_bm25_score,
+            "confidence_filter_input_count": len(chunks),
+            "confidence_filter_kept_count": len(kept),
+            "confidence_filter_dropped_count": len(dropped),
+            "confidence_filter_kept_scores": [
+                round(c.get("vector_score", 0), 4)
+                for c in kept
+                if c.get("vector_score") is not None
+            ],
+            "confidence_filter_dropped_scores": [
+                round(c.get("vector_score", 0), 4)
+                for c in dropped
+                if c.get("vector_score") is not None
+            ],
+            "confidence_filter_bm25_only_scores_normalized": bm25_only_scores,
+        }
 
     async def _search_hybrid(
         self,
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = 20,
         precomputed_embedding: Optional[List[float]] = None,
     ) -> Tuple[List[dict], dict]:
@@ -212,9 +318,11 @@ class RagRetrievalService:
         hybrid_start = time.perf_counter()
 
         vector_results, vector_timing = await self._search_similar_chunks_docling(
-            query_text, document_id, document_name, top_k, precomputed_embedding
+            query_text, document_id, document_name, organization_id, top_k, precomputed_embedding
         )
-        bm25_results = await self._search_bm25(query_text, document_id, document_name, top_k)
+        bm25_results = await self._search_bm25(
+            query_text, document_id, document_name, organization_id, top_k
+        )
 
         timing_info.update(vector_timing)
         timing_info["hybrid_parallel_ms"] = (time.perf_counter() - hybrid_start) * 1000
@@ -230,24 +338,34 @@ class RagRetrievalService:
             f"[HYBRID] Search complete: {len(fused_results)} results in {timing_info['hybrid_parallel_ms']:.2f}ms"
         )
 
-        return fused_results[:top_k], timing_info
+        return fused_results, timing_info
 
     async def retrieve_similar_chunks(
         self,
         query_text: str,
         document_id: UUID,
         document_name: str,
+        organization_id: UUID,
         top_k: int = None,
         min_score: float = None,
-        precomputed_embedding: Optional[List[float]] = None
+        precomputed_embedding: Optional[List[float]] = None,
     ) -> Tuple[List[dict], dict]:
         """
         Retrieve and format top similar chunks for a query.
+
+        top_k here is the FINAL number of chunks returned (post-rerank).
+        Internally, fetch_k (settings.retrieval_fetch_k, wider than top_k)
+        controls how many candidates are pulled before reranking trims
+        them down - "retrieve wide, rerank to the top few" (Step 4).
         """
         if top_k is None:
-            top_k = settings.retrieval_top_k
+            top_k = (
+                settings.reranker_top_k if settings.reranker_enabled else settings.retrieval_top_k
+            )
         if min_score is None:
             min_score = settings.retrieval_min_score
+
+        fetch_k = max(settings.retrieval_fetch_k, top_k)
 
         retrieval_start = time.perf_counter()
         timing_info = {"chunk_cache_hit": False}
@@ -255,18 +373,43 @@ class RagRetrievalService:
         # Use hybrid search if enabled
         if settings.hybrid_search_enabled:
             raw_chunks, search_timing = await self._search_hybrid(
-                query_text, document_id, document_name, top_k, precomputed_embedding
+                query_text,
+                document_id,
+                document_name,
+                organization_id,
+                fetch_k,
+                precomputed_embedding,
             )
-            filtered_chunks = raw_chunks  # RRF already ranks by relevance
+            filtered_chunks, filter_info = self._apply_confidence_filter(
+                raw_chunks, min_score, min_bm25_score=settings.retrieval_min_bm25_score
+            )
+            timing_info.update(filter_info)
         else:
             raw_chunks, search_timing = await self._search_similar_chunks_docling(
-                query_text, document_id, document_name, top_k, precomputed_embedding
+                query_text,
+                document_id,
+                document_name,
+                organization_id,
+                fetch_k,
+                precomputed_embedding,
             )
             filtered_chunks = [d for d in raw_chunks if d["score"] >= min_score]
 
         timing_info.update(search_timing)
+
+        # STEP 4: rerank the confidence-filtered candidates down to top_k.
+        reranked_chunks, rerank_timing = await self.reranker.rerank(
+            query_text=query_text,
+            chunks=filtered_chunks,
+            top_n=top_k,
+        )
+        timing_info.update(rerank_timing)
+
         timing_info["retrieval_total_ms"] = (time.perf_counter() - retrieval_start) * 1000
 
-        logger.info(f"[TIMING] Retrieval total: {timing_info['retrieval_total_ms']:.2f}ms, {len(filtered_chunks)} chunks")
+        logger.info(
+            f"[TIMING] Retrieval total: {timing_info['retrieval_total_ms']:.2f}ms, "
+            f"{len(reranked_chunks)} chunks after filter+rerank"
+        )
 
-        return filtered_chunks, timing_info
+        return reranked_chunks, timing_info

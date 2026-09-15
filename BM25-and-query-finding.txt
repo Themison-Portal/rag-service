@@ -1,0 +1,105 @@
+BM25 AND-Query Issue (Found During Step 2 Testing)
+======================================================
+Status: Documented, NOT fixed yet. Deferred until after Step 4
+(reranking) and Step 6 (chunk overlap) land.
+
+
+What was found
+----------------
+_search_bm25() in retrieval_service.py uses plainto_tsquery(), which
+combines all extracted terms with AND logic. This means a chunk must
+contain EVERY term from the query to match at all.
+
+For short keyword-style queries this is fine. For natural-language
+questions (how real users actually ask things), it silently fails even
+when the document clearly contains the answer.
+
+
+Concrete repro
+----------------
+Query: "What does SRC stand for?"
+
+plainto_tsquery('english', 'What does SRC stand for?')
+  -> 'src' & 'stand'
+
+The document defines SRC ("SRC is an expert advisory group...",
+"SRC = Safety Review Committee") but never uses the word "stand" near
+that definition. Because the query requires BOTH terms, this returns
+ZERO matches - even though a plain search for "src" alone matches
+multiple relevant chunks.
+
+Confirmed via direct SQL against the real chunks table:
+
+  -- AND (current, broken):
+  SELECT count(*) FROM document_chunks_docling
+  WHERE document_id = '9fb47d2b-74be-4e36-8923-33abae5a6da0'
+    AND content_tsv @@ plainto_tsquery('english', 'What does SRC stand for?');
+  -> 0 rows
+
+  -- OR (fix, tested working):
+  SELECT count(*) FROM document_chunks_docling
+  WHERE document_id = '9fb47d2b-74be-4e36-8923-33abae5a6da0'
+    AND content_tsv @@ to_tsquery('english',
+          regexp_replace(plainto_tsquery('english', 'What does SRC stand for?')::text, ' & ', ' | ', 'g'));
+  -> 4 rows, real ts_rank scores (0.030 - 0.046)
+
+Also confirmed this is NOT a tokenization/acronym problem - "SRC" and
+"Q2W" both tokenize and match correctly in isolation
+(to_tsvector/plainto_tsquery tests passed). The issue is specifically
+the implicit AND across all terms in a multi-word natural-language query.
+
+
+The fix (not yet applied)
+----------------------------
+Swap the AND query for an OR query by converting plainto_tsquery's
+output before use:
+
+  to_tsquery('english', regexp_replace(
+    plainto_tsquery('english', :query)::text, ' & ', ' | ', 'g'
+  ))
+
+Applies to both the ts_rank(...) SELECT and the WHERE ... @@ ... clause
+in _search_bm25().
+
+
+Why this is NOT being shipped right now
+------------------------------------------
+This is a real precision/recall tradeoff, not a clean bug fix:
+
+- AND is strict: BM25 only fires on strong, specific matches. Rarely
+  contributes noise. But under-matches on natural questions - the bug
+  above.
+- OR is permissive: BM25 will match far more broadly (any shared word),
+  which increases result volume, adds noise, and shifts more of the
+  quality-control burden onto the confidence filter / reranker
+  downstream.
+
+Open question for the team: was AND chosen deliberately (keep BM25
+strict/precise on purpose, let vector search handle fuzzy natural-
+language matching), or was it just the default and never revisited?
+Worth confirming before changing it.
+
+Also: if reranking (Step 4) and chunk overlap (Step 6) change what
+content gets indexed/retrieved, the right BM25 query strategy might
+look different once those land. Testing/tuning this in isolation now
+risks tuning against a moving target.
+
+
+Related, already shipped (Step 2)
+-------------------------------------
+BM25-only chunk scores (ts_rank) are now captured and logged in observe
+mode - see confidence_filter_bm25_only_scores_normalized in trace logs.
+No filtering applied yet (min_bm25_score defaults to None). This gives
+real score-distribution data to work from once the AND/OR decision is
+made and a threshold needs to be set.
+
+
+Next steps (after Step 4 + Step 6)
+--------------------------------------
+1. Get team input on whether AND was intentional.
+2. Re-run test question set once reranking + overlap are in place.
+3. Decide AND vs OR (or a middle-ground: partial/weighted term matching)
+   based on real trace data at that point, not in isolation now.
+4. If OR is chosen, recalibrate min_bm25_score against the NEW query's
+   score distribution - the old AND-based observations (all 0.0) will
+   not be valid evidence for a threshold once the query logic changes.

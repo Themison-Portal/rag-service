@@ -124,7 +124,7 @@ grpcurl -plaintext localhost:50051 list
 | `GRPC_MAX_WORKERS` | Max gRPC worker threads | 10 |
 | `HYBRID_SEARCH_ENABLED` | Enable hybrid search | true |
 | `SEMANTIC_CACHE_SIMILARITY_THRESHOLD` | Cache similarity threshold | 0.90 |
-| `LLM_MODEL` | Claude model to use | claude-sonnet-4-20250514 |
+| `LLM_MODEL` | Claude model to use | claude-sonnet-4-6 |
 
 ## Project Structure
 

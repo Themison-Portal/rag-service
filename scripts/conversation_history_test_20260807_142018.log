@@ -1,0 +1,410 @@
+Starting conversation history test run - Fri Aug  7 14:20:18 CEST 2026
+Document: Protocol_Ulcerative Colitis.pdf (ae08b6b1-fdc6-4304-8592-d02473a84ecc)
+
+=================================================================
+[Test 1 - Standalone (no history)]
+-----------------------------------------------------------------
+{
+    "result": {
+        "response": "## Exclusion Criteria for the TJ301 Clinical Trial in Ulcerative Colitis\n\nA subject will not be eligible for inclusion in this study if any of the following criteria apply:\n\n1. Pregnant or breastfeeding women. (Protocol_Ulcerative Colitis.pdf, p. 10)\n2. Contraindication to colonoscopy or sigmoidoscopy. (Protocol_Ulcerative Colitis.pdf, p. 10)\n3. Allergies to any component of TJ301. (Protocol_Ulcerative Colitis.pdf, p. 10)\n4. History of colostomy, colectomy or partial colectomy. (Protocol_Ulcerative Colitis.pdf, p. 10)\n5. Current diagnosis of inflammatory bowel disease unclassified, Crohn's disease, ischemic colitis, fulminant colitis and/or toxic megacolon, patients with ulcerative colitis limited to the rectum (ulcerative proctitis), infective enteritis, amebic bowel disease and intestinal schistosomiasis. (Protocol_Ulcerative Colitis.pdf, p. 10)\n6. History of malignancy other than a successfully treated non-metastatic cutaneous squamous cell or basal cell carcinoma and/or localized carcinoma in situ of the cervix. If the Screening colonoscopy shows evidence of dysplasia or a malignancy, the patient is not eligible. (Protocol_Ulcerative Colitis.pdf, p. 10)\n7. Primary or secondary immunodeficiency including neutropenia (absolute neutrophil count <1500/\u03bcL); or lymphopenia (absolute lymphocyte count <500/\u03bcL). (Protocol_Ulcerative Colitis.pdf, p. 11)\n8. Moderate to severe anaemia (haemoglobin <9 g/dL), or thrombocytopenia (platelet count <75,000/\u03bcL), or serum creatinine >2 mg/dL. (Protocol_Ulcerative Colitis.pdf, p. 11)\n9. Autoimmune disease besides UC, with the exceptions of Sjogren's syndrome or hypothyroidism. (Protocol_Ulcerative Colitis.pdf, p. 11)\n10. Clostridium (C.) difficile positive at screening visit or treated for C. difficile within the 4 weeks prior to Randomization. (Protocol_Ulcerative Colitis.pdf, p. 11)\n11. Known clinically relevant chronic liver disease. Impaired hepatic function in the absence of a diagnosis of primary sclerosing cholangitis (serum transaminases >2.5 x ULN, alkaline phosphatase >2.5 x ULN, or abnormalities in synthetic liver function tests judged by the investigator to be clinically significant), or a diagnosis of primary sclerosing cholangitis, serum transaminases >3 x ULN, alkaline phosphatase >3 x ULN, or abnormalities in synthetic liver function tests (total bilirubin >1.5 x ULN) judged by the investigator to be clinically significant. (Protocol_Ulcerative Colitis.pdf, p. 11)\n12. Serious underlying disease other than UC in the opinion of the investigator. (Protocol_Ulcerative Colitis.pdf, p. 11)\n13. History of drug addiction within the last 1 year or current drug addiction or use of illicit drugs. (Protocol_Ulcerative Colitis.pdf, p. 11)\n14. Any indication of the regular use of more than 40 grams of alcohol every day. (Protocol_Ulcerative Colitis.pdf, p. 11)\n15. Smokers who smoke more than 10 cigarettes per day. (Protocol_Ulcerative Colitis.pdf, p. 11)\n16. Known concurrent acute or chronic viral hepatitis B or C infection or human immunodeficiency virus (HIV) infection. (Protocol_Ulcerative Colitis.pdf, p. 11)\n17. Presence or history of active tuberculosis (TB) or latent TB infection, defined as 1) a positive QuantiFERON-TB Gold test at Screening, or 2) a positive T-spot test within 4 weeks of Randomisation and evidence of current or previous pulmonary tuberculosis by chest X-ray within 12 weeks of Randomisation. (Protocol_Ulcerative Colitis.pdf, p. 11)\n18. Positive immunoglobulin M antibody titres in the presence of negative immunoglobulin G titres to Epstein-Barr virus (EBV). (Protocol_Ulcerative Colitis.pdf, p. 11)\n19. If clinical suspicion of cytomegalovirus (CMV), cytomegalovirus testing should be undertaken. Subjects with intestinal mucosa biopsy positive for cytomegalovirus at screening are to be excluded. (Protocol_Ulcerative Colitis.pdf, p. 11)\n20. Receiving any investigational therapy or any approved therapy for investigational use within 30 days or 5 half-lives prior to Randomization (whichever is longer). (Protocol_Ulcerative Colitis.pdf, p. 11)\n21. Currently taking any medications other than those allowed per protocol guidelines. (Protocol_Ulcerative Colitis.pdf, p. 11)\n22. Infections (including diverticulitis) requiring treatment with antibiotics, antivirals, or antifungals within 14 days prior to Randomisation. (Protocol_Ulcerative Colitis.pdf, p. 11)\n23. Any prior use of biologic drugs. (Protocol_Ulcerative Colitis.pdf, p. 11)\n24. Received any live (attenuated) vaccines within 30 days prior to Randomisation. (Protocol_Ulcerative Colitis.pdf, p. 12)\n25. Recent treatment with medium-to-high-dose intravenous corticosteroids (methylprednisolone 60 mg/day or hydrocortisone 300 mg/day) within 8 weeks prior to Randomisation or oral corticosteroids of more than 20 mg prednisone (or equivalent) within 30 days prior to Randomisation. (Protocol_Ulcerative Colitis.pdf, p. 12)\n26. Receipt of cyclosporine, tacrolimus, sirolimus, or mycophenolate mofetil within 30 days prior to Randomisation. (Protocol_Ulcerative Colitis.pdf, p. 12)\n27. Treatment with therapeutic enema or suppository, other than required for endoscopy preparation, within 14 days prior to the screening endoscopy and during the remainder of the trial. (Protocol_Ulcerative Colitis.pdf, p. 12)",
+        "sources": [
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 10,
+                "section": "Exclusion Criteria",
+                "exactText": "",
+                "bboxes": [
+                    [
+                        72.00000000000018,
+                        355.22398291015617,
+                        520.5600000000003,
+                        344.93497521784843
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 34,
+                "section": "4.1.2 Exclusion Criteria",
+                "exactText": "",
+                "bboxes": [
+                    [
+                        72.0,
+                        251.66398291015628,
+                        520.5600000000001,
+                        241.3749752178486
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 11,
+                "section": "Exclusion Criteria",
+                "exactText": "",
+                "bboxes": [
+                    [
+                        72.12,
+                        368.7839829101563,
+                        555.84,
+                        313.0149752178486
+                    ],
+                    [
+                        93.6,
+                        732.3839829101563,
+                        418.56,
+                        722.0949752178486
+                    ],
+                    [
+                        72.12,
+                        602.1839829101563,
+                        555.8400000000003,
+                        500.81497521784854
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 12,
+                "section": "Exclusion Criteria",
+                "exactText": "",
+                "bboxes": [
+                    [
+                        72.12,
+                        732.3839829101563,
+                        478.2,
+                        722.0949752178486
+                    ]
+                ],
+                "relevance": "high"
+            }
+        ]
+    },
+    "timing": {
+        "embedding_ms": 279.06533295754343,
+        "retrieval_total_ms": 0,
+        "llm_call_ms": 0,
+        "generation_total_ms": 1106.2505410518497,
+        "original_chunk_count": 0,
+        "compressed_chunk_count": 0,
+        "embedding_cache_hit": false,
+        "semantic_cache_hit": true,
+        "chunk_cache_hit": false,
+        "response_cache_hit": false,
+        "semantic_cache_similarity": 0.9999992916805063
+    }
+}
+
+=================================================================
+[Test 2 - Refinement follow-up]
+-----------------------------------------------------------------
+{
+    "result": {
+        "response": "The hepatic-related exclusion criterion (Criterion 11) in the TJ301 clinical trial is as follows:\n\n**Exclusion Criterion 11 \u2013 Known Clinically Relevant Chronic Liver Disease:**\n\nThere are two scenarios described:\n\n**A) In the absence of a diagnosis of Primary Sclerosing Cholangitis (PSC):**\nA subject is excluded if they have impaired hepatic function defined by any of the following:\n- Serum transaminases **>2.5 \u00d7 ULN** (Upper Limit of Normal)\n- Alkaline phosphatase **>2.5 \u00d7 ULN**\n- Abnormalities in synthetic liver function tests judged by the investigator to be **clinically significant**\n\n(Protocol_Ulcerative Colitis.pdf, p. 11; p. 35)\n\n**B) With a diagnosis of Primary Sclerosing Cholangitis (PSC):**\nA subject is excluded if they have:\n- Serum transaminases **>3 \u00d7 ULN**\n- Alkaline phosphatase **>3 \u00d7 ULN**\n- Abnormalities in synthetic liver function tests, specifically **total bilirubin >1.5 \u00d7 ULN**, judged by the investigator to be **clinically significant**\n\n(Protocol_Ulcerative Colitis.pdf, p. 11; p. 35)\n\n> In summary, PSC patients are held to a **slightly higher threshold** for transaminases and alkaline phosphatase (3\u00d7 vs. 2.5\u00d7 ULN), acknowledging that PSC itself may cause some baseline elevation in these markers.",
+        "sources": [
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 11,
+                "section": "Exclusion Criteria",
+                "exactText": "Known clinically relevant chronic liver disease. Impaired hepatic function in the absence of a diagnosis of primary sclerosing cholangitis (serum transaminases >2.5 x upper limit of normal [ULN], alkaline phosphatase >2.5 x ULN, or abnormalities in synthetic liver function tests judged by the investigator to be clinically significant), or a diagnosis of primary sclerosing cholangitis, serum transaminases >3 x ULN, alkaline phosphatase >3 x ULN, or abnormalities in synthetic liver function tests (total bilirubin >1.5 x ULN) judged by the investigator to be clinically significant.",
+                "bboxes": [
+                    [
+                        72.12,
+                        602.1839829101563,
+                        555.8400000000003,
+                        500.81497521784854
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 35,
+                "section": "4.1.2 Exclusion Criteria",
+                "exactText": "Known clinically relevant chronic liver disease. Impaired hepatic function in the absence of a diagnosis of primary sclerosing cholangitis (serum transaminases >2.5 x upper limit of normal [ULN], alkaline phosphatase >2.5 x ULN, or abnormalities in synthetic liver function tests judged by the investigator to be clinically significant), or a diagnosis of primary sclerosing cholangitis, serum transaminases >3 x ULN, alkaline phosphatase >3 x ULN, or abnormalities in synthetic liver function tests (total bilirubin >1.5 x ULN) judged by the investigator to be clinically significant.",
+                "bboxes": [
+                    [
+                        72.12000000000009,
+                        541.5839829101561,
+                        555.8400000000003,
+                        440.2149752178484
+                    ]
+                ],
+                "relevance": "high"
+            }
+        ]
+    },
+    "timing": {
+        "embedding_ms": 134.70179098658264,
+        "retrieval_total_ms": 1393.9046249724925,
+        "llm_call_ms": 12599.771083914675,
+        "generation_total_ms": 15438.552958075888,
+        "original_chunk_count": 6,
+        "compressed_chunk_count": 5,
+        "embedding_cache_hit": false,
+        "semantic_cache_hit": false,
+        "chunk_cache_hit": false,
+        "response_cache_hit": false,
+        "semantic_cache_similarity": 0
+    }
+}
+
+=================================================================
+[Test 3 - Refusal survives follow-up]
+-----------------------------------------------------------------
+{
+    "result": {
+        "response": "The question is ambiguous \u2014 'other countries' could refer to several different contexts in the document. Based on the available context:\n\n**Trial Sites (Phase II):**\nThe Phase II trial (CTJ301UC201) is being conducted across **Mainland China, Taiwan, Republic of Korea, and Australia** as a multicenter, international study. (Protocol_Ulcerative Colitis.pdf, p1)\n\n**Phase 1 Studies:**\nThe prior Phase 1 single- and multiple-ascending dose studies were conducted in **Germany**, in healthy subjects and Crohn's disease patients. (Protocol_Ulcerative Colitis.pdf, p23)\n\n**Manufacturing:**\nTJ301 is manufactured by Octoplus Development B.V. (now Dr. Reddy's Research & Development B.V.) in the **Netherlands**. (Protocol_Ulcerative Colitis.pdf, p39)\n\n**Expert Committee:**\nProf. Dr. Stefan Schreiber is affiliated with the University Hospital Schleswig-Holstein in **Kiel, Germany**, serving on the expert committee. (Protocol_Ulcerative Colitis.pdf, p1)\n\nI don't have this information regarding any other specific country-level details beyond what is listed above.",
+        "sources": [
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 1,
+                "section": "Title Page",
+                "exactText": "Multicenter, international, across Mainland China, Taiwan, Republic of Korea and Australia",
+                "bboxes": [
+                    [
+                        72.0,
+                        578.6639829101563,
+                        168.0,
+                        568.2525283647018
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 23,
+                "section": "1.2 Scientific Justification for Conducting the Trial",
+                "exactText": "The safety, tolerability and pharmacokinetic (PK) properties of TJ301 (FE 999301) have been investigated in Germany in two phase 1, single- and multiple-ascending dose clinical studies in healthy and Crohn's disease subjects",
+                "bboxes": [
+                    [
+                        71.99999999999989,
+                        618.6239829101562,
+                        558.9599999999998,
+                        502.1349752178485
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 39,
+                "section": "5.1 Treatments Administered",
+                "exactText": "Manufacturer: Octoplus Development B.V. (now as Dr. Reddy's Research &Development B.V.) , Netherlands",
+                "bboxes": [
+                    [
+                        71.99999999999997,
+                        689.9039829101564,
+                        523.8,
+                        664.4949752178487
+                    ]
+                ],
+                "relevance": "medium"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 1,
+                "section": "Expert Committee",
+                "exactText": "Prof. Dr. Stefan Schreiber Institute for Clinical Molecular Biology University Hospital Schleswig-Holstein Schittenhelmstrasse 12, 24105 Kiel, Germany",
+                "bboxes": [
+                    [
+                        72.0,
+                        578.6639829101563,
+                        168.0,
+                        568.2525283647018
+                    ]
+                ],
+                "relevance": "low"
+            }
+        ]
+    },
+    "timing": {
+        "embedding_ms": 447.03625002875924,
+        "retrieval_total_ms": 1124.0680000046268,
+        "llm_call_ms": 15529.730750015005,
+        "generation_total_ms": 18734.740791958757,
+        "original_chunk_count": 6,
+        "compressed_chunk_count": 6,
+        "embedding_cache_hit": false,
+        "semantic_cache_hit": false,
+        "chunk_cache_hit": false,
+        "response_cache_hit": false,
+        "semantic_cache_similarity": 0
+    }
+}
+
+=================================================================
+[Test 4 - Can you be more specific? (ticket example)]
+-----------------------------------------------------------------
+{
+    "result": {
+        "response": "The question \"Can you be more specific?\" is too vague and ambiguous for me to determine what aspect of the document you'd like me to elaborate on. I don't have this information about what specific topic you are referring to.\n\nBased on the available context, I can provide more detail on any of the following topics from the **CTJ301UC201 ulcerative colitis protocol**:\n\n1. **Exploratory Biomarkers** \u2014 specific markers measured from blood (CRP, ESR, IL-6, IL-6/sIL-6R complex, neutrophil and platelet count) and faeces (calprotectin) (Protocol_Ulcerative Colitis.pdf, p87)\n2. **Exploratory Endpoints** \u2014 changes from baseline at Weeks 4, 8, and 12 in the biomarkers listed above (Protocol_Ulcerative Colitis.pdf, p25)\n3. **Lab Analysis Locations** \u2014 which biomarkers are analysed locally vs. centrally (Protocol_Ulcerative Colitis.pdf, p45)\n4. **Randomisation Stratification Changes** \u2014 the amendment from Version 1.0 to Version 1.1 (Protocol_Ulcerative Colitis.pdf, p92)\n5. **PK Analysis Methods** \u2014 non-compartmental analysis parameters for TJ301 (Protocol_Ulcerative Colitis.pdf, p68)\n\nCould you please clarify which topic you'd like me to expand on?",
+        "sources": [
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 87,
+                "section": "Exploratory Biomarkers",
+                "exactText": "Exploratory Biomarkers:\n- From blood: C-reactive protein (CRP), ESR, IL-6, IL-6/sIL-6R complex, neutrophil and platelet count\n- From faeces: calprotectin",
+                "bboxes": [
+                    [
+                        72.0,
+                        693.5349752178486,
+                        554.5199999999999,
+                        721.4399829101562
+                    ]
+                ],
+                "relevance": "medium"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 25,
+                "section": "Exploratory Endpoints",
+                "exactText": "Change from Baseline to Weeks 4, 8, and 12 in exploratory biomarkers (erythrocyte sedimentation rate [ESR], C-reactive protein (CRP), IL-6, IL-6/sIL-6R complex, neutrophil and platelet count, faecal calprotectin).",
+                "bboxes": [
+                    [
+                        89.88,
+                        548.5749752178484,
+                        550.68,
+                        589.7999829101561
+                    ]
+                ],
+                "relevance": "medium"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 45,
+                "section": "Table 1 Time and Events Schedule",
+                "exactText": "Biomarkers erythrocyte sedimentation rate [ESR], C-reactive protein (CRP), neutrophil and platelet count tests will be be analysed in local sites. IL-6, IL-6/sIL-6R complex, and faecal calprotectin tests will be analysed in central lab.",
+                "bboxes": [
+                    [
+                        77.15952000000003,
+                        115.30609217037261,
+                        795.356639999999,
+                        132.16128732421873
+                    ]
+                ],
+                "relevance": "medium"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 92,
+                "section": "Appendix 4 - Summary of Changes for Version 1.1",
+                "exactText": "90 patients will be centrally, dynamically, randomly assigned to 3 groups (1:1:1) to receive 600mg TJ301 biweekly (Q2W), 300mg TJ301 Q2W or placebo Q2W. Randomisation will be stratified by prior corticosteroids treatment (yes/no) and consent to participate in PK substudy (yes/no).",
+                "bboxes": [
+                    [
+                        52.59044647216797,
+                        121.96722412109375,
+                        771.7723999023438,
+                        495.76949310302734
+                    ]
+                ],
+                "relevance": "low"
+            }
+        ]
+    },
+    "timing": {
+        "embedding_ms": 407.8758329851553,
+        "retrieval_total_ms": 1161.3720000023022,
+        "llm_call_ms": 15835.531291086227,
+        "generation_total_ms": 18845.913624973036,
+        "original_chunk_count": 6,
+        "compressed_chunk_count": 6,
+        "embedding_cache_hit": false,
+        "semantic_cache_hit": false,
+        "chunk_cache_hit": false,
+        "response_cache_hit": false,
+        "semantic_cache_similarity": 0
+    }
+}
+
+=================================================================
+[Test 5 - Genuine topic change, not a follow-up]
+-----------------------------------------------------------------
+{
+    "result": {
+        "response": "The study has **two primary endpoints**:\n\n### 1. Primary Efficacy Endpoint\nClinical and endoscopic remission at **Week 12**, defined as:\n- Full Mayo score **\u2264 2**\n- No individual subscore **> 1**\n- Rectal bleeding subscore **= 0**\n\n(Protocol_Ulcerative Colitis.pdf, p. 7; p. 30; p. 68)\n\n### 2. Primary Safety Endpoint\n- Adverse events\n- Vital signs\n- 12-lead Electrocardiography (ECG)\n- Clinical safety laboratory abnormalities\n\n(Protocol_Ulcerative Colitis.pdf, p. 7)\n\n---\n\n### Statistical Analysis of the Primary Efficacy Endpoint\nThe binary outcome (remission status = yes/no) is analysed using a **logistic regression model** with:\n- **Fixed effects**: treatment, randomisation-stratification factors (prior corticosteroids treatment and consent to participate in PK substudy)\n- **Covariate**: baseline full Mayo score\n- **Missing data**: patients with missing remission status are assumed to be **not in remission**\n\nSensitivity analyses using different analysis sets and missing data handling will be detailed in the SAP. (Protocol_Ulcerative Colitis.pdf, p. 68)",
+        "sources": [
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 7,
+                "section": "Primary Endpoints",
+                "exactText": "Primary Endpoints\n- Clinical and endoscopic remission at Week 12, defined as a full Mayo score \u2264 2, no individual subscore >1, rectal bleeding subscore = 0.\n- Adverse events, vital signs, 12-lead Electrocardiography (ECG), and clinical safety laboratory abnormalities.",
+                "bboxes": [
+                    [
+                        90.0,
+                        646.0799829101562,
+                        514.9199999999998,
+                        619.2549752178485
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 30,
+                "section": "3.4.2 Selection of Endpoints",
+                "exactText": "The prospectively defined primary efficacy endpoint will be a binary endpoint of clinical and endoscopic remission at Week 12, defined as a full Mayo score \u22642, no individual subscore >1 , and rectal bleeding subscore = 0.",
+                "bboxes": [
+                    [
+                        71.99999999999994,
+                        664.2239829101562,
+                        549.4800000000001,
+                        517.3749752178485
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 68,
+                "section": "9.6.2 Primary Endpoint",
+                "exactText": "The primary efficacy endpoint is clinical and endoscopic remission (defined as a full Mayo score \u22642, no individual subscore >1, rectal bleeding subscore = 0) at Week 12 in the ITT population. This binary outcome (remission status=yes/no) variable will be analysed by a logistic regression model with treatment and the randomisation-stratification factors (prior corticosteroids treatment and consent to participate in PK substudy) as fixed effects and the baseline full Mayo score as covariate. A patient with missing data on the remission status will be assumed to be not in remission.",
+                "bboxes": [
+                    [
+                        71.99999999999997,
+                        721.7039829101564,
+                        558.8399999999996,
+                        605.2149752178486
+                    ]
+                ],
+                "relevance": "high"
+            },
+            {
+                "name": "Protocol_Ulcerative Colitis.pdf",
+                "page": 13,
+                "section": "Data Analyses",
+                "exactText": "The primary efficacy endpoint is clinical and endoscopic remission at Week 12. This binary outcome (remission status=yes/no) variable will be analysed by a logistic regression model. A patient with missing data on the remission status will be assumed to be not in remission.",
+                "bboxes": [
+                    [
+                        72.0,
+                        632.5439829101563,
+                        552.24,
+                        561.5349752178486
+                    ]
+                ],
+                "relevance": "medium"
+            }
+        ]
+    },
+    "timing": {
+        "embedding_ms": 254.55354095902294,
+        "retrieval_total_ms": 1131.081833038479,
+        "llm_call_ms": 12333.1449580146,
+        "generation_total_ms": 15266.448042006232,
+        "original_chunk_count": 6,
+        "compressed_chunk_count": 5,
+        "embedding_cache_hit": false,
+        "semantic_cache_hit": false,
+        "chunk_cache_hit": false,
+        "response_cache_hit": false,
+        "semantic_cache_similarity": 0
+    }
+}
+
+=================================================================
+Test run complete. Full output saved to: conversation_history_test_20260807_142018.log
+
+Check the 'retrieval_query' field (if logged) or rag_service.log's
+trace lines to see what each follow-up was actually condensed to.

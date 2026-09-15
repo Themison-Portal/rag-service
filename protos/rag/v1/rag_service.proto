@@ -215,7 +215,7 @@ message GenerateMessage {
 message GenerateResponse {
   // Raw text or a JSON string (when response_schema_json was supplied).
   string content = 1;
-  // Concrete model used (e.g., "claude-sonnet-4-20250514").
+  // Concrete model used (e.g., "claude-sonnet-4-6").
   string model = 2;
   int32 prompt_tokens = 3;
   int32 completion_tokens = 4;

@@ -1,0 +1,21 @@
+[STARTUP] contextual_retrieval_enabled=True
+INFO:     Started server process [66255]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+[LLM_TRUNCATED] query='What are the main exclusion criteria?' stop_reason=max_tokens raw_len=6467
+[EMPTY_SOURCES] query='What are the main exclusion criteria?' stop_reason=max_tokens chunk_count=4 chunk_pages=[10, 34, 11, 12] raw_content_tail=' limited to the rectum (ulcerative proctitis), infective enteritis, amebic bowel disease and intestinal schistosomiasis.\\n6. History of malignancy other than a successfully treated non-metastatic cutaneous squamous cell or basal cell carcinoma and/or localized carcinoma in situ of the cervix.\\n7. Primary or secondary immunodeficiency including neutropenia (absolute neutrophil count",\n      "bboxes": [[72.0, 355.22, 520.56, 344.93]],\n      "relevance": "high"\n    },\n    {\n      "name": "Protocol_'
+[SOURCES_FALLBACK] Reconstructing sources for query='What are the main exclusion criteria?'
+INFO:     127.0.0.1:61640 - "POST /v1/query HTTP/1.1" 200 OK
+[LLM_TRUNCATED] query='Can you be more specific about the hepatic ones?' stop_reason=max_tokens raw_len=5795
+[EMPTY_SOURCES] query='Can you be more specific about the hepatic ones?' stop_reason=max_tokens chunk_count=6 chunk_pages=[87, 85, 97, 35, 11, 18] raw_content_tail='000000003, 440.2149752178484]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 87, "section": "Other Laboratory Assessments", "exactText": "HBV (Hepatitis B Surface Antigen)\\n- HCV (Hepatitis C Antibody)", "bboxes": [[71.63999999999999, 547.4399829101563, 503.1599999999998, 519.5349752178487]], "relevance": "high"}, {"name": "Protocol_Ulcerative Colitis.pdf", "page": 11, "section": "Exclusion Criteria", "exactText": "Known clinically relevant chronic liver disease. Imp'
+[SOURCES_FALLBACK] Reconstructing sources for query='Can you be more specific about the hepatic ones?'
+INFO:     127.0.0.1:61647 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61652 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61657 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61662 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61668 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61671 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61673 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61675 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61677 - "POST /v1/query HTTP/1.1" 200 OK

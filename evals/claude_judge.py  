@@ -1,0 +1,50 @@
+"""
+
+Wraps Claude as DeepEval's judge model (used by every GEval-based metric
+in test_uc_protocol.py — correctness, clarify, follow-up-context).
+
+Deliberately independent of rag_service.clients.anthropic_client / config:
+the judge should use a fixed, known-good model regardless of whatever
+model_hint your PROD pipeline happens to be configured with at generation
+time. Reusing the same client code is fine; reusing the same settings
+object would silently couple "what answers the question" and "what grades
+the answer" to one config knob.
+"""
+
+import os
+
+from anthropic import AsyncAnthropic
+from deepeval.models import DeepEvalBaseLLM
+
+# Override via env if you want a different judge (e.g. opus for higher-stakes
+# grading, or haiku while iterating fast on the suite itself).
+DEFAULT_JUDGE_MODEL = os.environ.get("EVAL_JUDGE_MODEL", "claude-sonnet-4-6")
+
+
+class ClaudeJudge(DeepEvalBaseLLM):
+    def __init__(self, model: str = DEFAULT_JUDGE_MODEL):
+        self.model = model
+        self.client = AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+    def load_model(self):
+        return self.client
+
+    def generate(self, prompt: str) -> str:
+        # DeepEval's sync metric path calls this directly (no running event
+        # loop to hook into), so spin one up per call rather than trying to
+        # share a loop across the test session.
+        import asyncio
+
+        return asyncio.run(self.a_generate(prompt))
+
+    async def a_generate(self, prompt: str) -> str:
+        response = await self.client.messages.create(
+            model=self.model,
+            max_tokens=1024,
+            temperature=0,  # judging should be deterministic, not creative
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text
+
+    def get_model_name(self) -> str:
+        return self.model

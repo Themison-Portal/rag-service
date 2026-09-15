@@ -1,0 +1,27 @@
+[STARTUP] contextual_retrieval_enabled=True
+INFO:     Started server process [70680]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+[LLM_TRUNCATED] query='What are the main exclusion criteria?' stop_reason=max_tokens raw_len=6464
+[EMPTY_SOURCES] query='What are the main exclusion criteria?' stop_reason=max_tokens chunk_count=4 chunk_pages=[10, 34, 11, 12] raw_content_tail='imited to the rectum (ulcerative proctitis), infective enteritis, amebic bowel disease and intestinal schistosomiasis.\\n6. History of malignancy other than a successfully treated non-metastatic cutaneous squamous cell or basal cell carcinoma and/or localized carcinoma in situ of the cervix.\\n7. Primary or secondary immunodeficiency including neutropenia (absolute neutrophil count",\n      "bboxes": [[72.0, 355.22, 520.56, 344.93]],\n      "relevance": "high"\n    },\n    {\n      "name": "Protocol_Ul'
+[SOURCES_FALLBACK] Reconstructing sources for query='What are the main exclusion criteria?'
+INFO:     127.0.0.1:61833 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61840 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61844 - "POST /v1/query HTTP/1.1" 200 OK
+[EMPTY_SOURCES] query='Can you be more specific?' stop_reason=end_turn chunk_count=6 chunk_pages=[87, 25, 56, 45, 68, 92] raw_content_tail='** (blood and faecal markers tracked)\\n2. **Exploratory Endpoints** (timepoints: Weeks 4, 8, 12)\\n3. **Blood and Faeces Sampling procedures**\\n4. **Lab analysis locations** (local vs. central lab, fasting requirements)\\n5. **Pharmacokinetic (PK) analysis** parameters for TJ301\\n6. **Randomization stratification changes** (Version 1.0 vs. 1.1)\\n\\nPlease clarify which topic you\'d like me to expand on. I don\'t have this information about what your previous question referred to.", "sources": []}\n```'
+[SOURCES_FALLBACK] Reconstructing sources for query='Can you be more specific?'
+INFO:     127.0.0.1:61848 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61853 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61860 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61863 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61869 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61875 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61879 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61883 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61886 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61890 - "POST /v1/query HTTP/1.1" 200 OK
+[EMPTY_SOURCES] query='Can you be more specific?' stop_reason=end_turn chunk_count=6 chunk_pages=[87, 25, 56, 45, 68, 92] raw_content_tail='e detail on? For example:\\n\\n- **Exploratory biomarkers** (which ones, how they are measured, or where they are analyzed)?\\n- **Randomization stratification factors** (the changes between protocol versions)?\\n- **Pharmacokinetic analysis methods** for TJ301?\\n- **Sampling procedures** for blood or faecal samples?\\n- **Exploratory endpoints** and their timepoints?\\n\\nI don\'t have this information regarding what specific topic you are referring to with this follow-up question.", "sources": []}\n```'
+[SOURCES_FALLBACK] Reconstructing sources for query='Can you be more specific?'
+INFO:     127.0.0.1:61894 - "POST /v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61898 - "POST /v1/query HTTP/1.1" 200 OK

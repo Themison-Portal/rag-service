@@ -1,0 +1,59 @@
+RAG Fix - Step 4: Reranking
+==============================
+
+What we did
+------------
+The Cohere reranker was configured in the code but never actually
+called - the settings existed but nothing used them. Wired it up:
+
+- Retrieval now fetches a wider set of candidates (45 instead of 20)
+- Those get passed through the confidence filter, same as before
+- Then a second pass (Cohere reranker) re-scores everything specifically
+  against the question asked, not just general similarity
+- Only the top 6 highest-scoring chunks after that go to the AI
+
+Also fixed a bug found while testing: three different places in the code
+had a hardcoded chunk count that was silently overriding the reranker's
+settings, so the new tighter top-6 selection wasn't actually reaching
+the AI at first. Fixed all three.
+
+Test we ran
+------------
+Document: Protocol_Ulcerative Colitis.pdf (same one from Steps 1-2)
+Ran 5 questions - reused 3 from Step 2 (as a regression check) and
+added 2 new ones designed to specifically test whether reranking helps
+pull together answers that are scattered across multiple sections.
+
+What we found
+--------------
+Reranking ran successfully on every single question, no failures.
+
+The reranker's scoring is much sharper than plain similarity search was.
+Example: for "DSMC or SRC?", the two actually-relevant chunks scored
+0.99 and 0.75, while everything else dropped below 0.001. Before
+reranking, all the candidate chunks scored close together (0.39-0.59)
+and couldn't be told apart this clearly.
+
+The two new "scattered answer" questions worked well:
+- Pregnancy question: pulled together all 5 relevant pieces (what to
+  do immediately, reporting rules, follow-up duration, what counts as
+  a serious event) correctly and completely.
+- Exclusion criteria question: correctly assembled 8 separate numbered
+  criteria spread across 3 different pages, plus related context from
+  a different section - exactly the kind of "answer scattered across
+  the document" case reranking is meant to fix.
+
+The 3 reused questions from Step 2 still answered correctly - no
+regression from adding reranking.
+
+Something to note for later
+------------------------------
+A couple of source quotes came back with odd leading text like "1 = "
+or "3.3, 3 = " - looks like an artifact from how a table in the
+document (the change-history table) gets parsed during ingestion, not
+something the AI made up. Worth a closer look during a future
+ingestion/parsing pass, not blocking this step.
+
+Next
+-----
+Step 5: contextual retrieval 

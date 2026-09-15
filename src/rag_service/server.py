@@ -1,6 +1,7 @@
 """
 gRPC Server implementation for RAG Service.
 """
+
 import json
 import logging
 from uuid import UUID
@@ -83,14 +84,16 @@ class RagServicer(pb2_grpc.RagServiceServicer):
                     )
 
                     if progress.result:
-                        response.result.CopyFrom(pb2.IngestResult(
-                            success=progress.result.get("success", False),
-                            document_id=progress.result.get("document_id", ""),
-                            status=progress.result.get("status", ""),
-                            chunks_count=progress.result.get("chunks_count", 0),
-                            created_at=progress.result.get("created_at", ""),
-                            error=progress.result.get("error", ""),
-                        ))
+                        response.result.CopyFrom(
+                            pb2.IngestResult(
+                                success=progress.result.get("success", False),
+                                document_id=progress.result.get("document_id", ""),
+                                status=progress.result.get("status", ""),
+                                chunks_count=progress.result.get("chunks_count", 0),
+                                created_at=progress.result.get("created_at", ""),
+                                error=progress.result.get("error", ""),
+                            )
+                        )
 
                     yield response
 
@@ -116,7 +119,7 @@ class RagServicer(pb2_grpc.RagServiceServicer):
 
         try:
             document_id = UUID(request.document_id)
-            top_k = request.top_k if request.top_k > 0 else settings.retrieval_top_k
+            top_k = request.top_k if request.top_k > 0 else None
             min_score = request.min_score if request.min_score > 0 else settings.retrieval_min_score
 
             async with get_session() as session:
@@ -145,26 +148,27 @@ class RagServicer(pb2_grpc.RagServiceServicer):
                 bboxes = []
                 for bbox in s.get("bboxes", []):
                     if len(bbox) == 4:
-                        bboxes.append(pb2.BBox(
-                            x0=float(bbox[0]),
-                            y0=float(bbox[1]),
-                            x1=float(bbox[2]),
-                            y1=float(bbox[3]),
-                        ))
+                        bboxes.append(
+                            pb2.BBox(
+                                x0=float(bbox[0]),
+                                y0=float(bbox[1]),
+                                x1=float(bbox[2]),
+                                y1=float(bbox[3]),
+                            )
+                        )
 
-                relevance = RELEVANCE_MAP.get(
-                    s.get("relevance", "high"),
-                    pb2.RELEVANCE_HIGH
+                relevance = RELEVANCE_MAP.get(s.get("relevance", "high"), pb2.RELEVANCE_HIGH)
+
+                sources.append(
+                    pb2.RagSource(
+                        name=s.get("name", ""),
+                        page=s.get("page", 0),
+                        section=s.get("section", ""),
+                        exact_text=s.get("exactText", ""),
+                        bboxes=bboxes,
+                        relevance=relevance,
+                    )
                 )
-
-                sources.append(pb2.RagSource(
-                    name=s.get("name", ""),
-                    page=s.get("page", 0),
-                    section=s.get("section", ""),
-                    exact_text=s.get("exactText", ""),
-                    bboxes=bboxes,
-                    relevance=relevance,
-                ))
 
             answer = pb2.RagAnswer(
                 response=answer_data.get("response", ""),
@@ -208,10 +212,7 @@ class RagServicer(pb2_grpc.RagServiceServicer):
         logger.info(f"GetHighlightedPdf called for page={request.page}")
 
         try:
-            bboxes = [
-                [bbox.x0, bbox.y0, bbox.x1, bbox.y1]
-                for bbox in request.bboxes
-            ]
+            bboxes = [[bbox.x0, bbox.y0, bbox.x1, bbox.y1] for bbox in request.bboxes]
 
             pdf_bytes = await self.highlight_service.get_highlighted_pdf(
                 doc_url=request.document_url,
@@ -282,10 +283,7 @@ class RagServicer(pb2_grpc.RagServiceServicer):
         )
 
         try:
-            messages = [
-                {"role": m.role, "content": m.content}
-                for m in request.messages
-            ]
+            messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
             response_schema = None
             if request.response_schema_json:
@@ -332,11 +330,13 @@ class RagServicer(pb2_grpc.RagServiceServicer):
 
         # Check database
         db_healthy = await check_database_connection()
-        components.append(pb2.ComponentHealth(
-            name="database",
-            healthy=db_healthy,
-            message="Connected" if db_healthy else "Connection failed",
-        ))
+        components.append(
+            pb2.ComponentHealth(
+                name="database",
+                healthy=db_healthy,
+                message="Connected" if db_healthy else "Connection failed",
+            )
+        )
 
         # Overall status
         all_healthy = all(c.healthy for c in components)

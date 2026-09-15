@@ -1,6 +1,7 @@
 """
 Configuration for the RAG microservice.
 """
+
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 
@@ -9,6 +10,7 @@ class Settings(BaseSettings):
     """
     RAG Service settings loaded from environment variables.
     """
+
     # API Keys
     openai_api_key: str
     anthropic_api_key: str
@@ -16,7 +18,15 @@ class Settings(BaseSettings):
     # Database
     database_url: str  # PostgreSQL connection (asyncpg format)
 
-    # gRPC Server
+    # Transport: "http" (default) or "grpc". main.py picks the server to
+    # start based on this. Both implementations stay in the repo so a
+    # revert is one env-var flip.
+    transport: str = "http"
+
+    # HTTP server (when transport == "http")
+    http_port: int = 8000
+
+    # gRPC Server (when transport == "grpc")
     grpc_port: int = 50051
     grpc_max_workers: int = 10
 
@@ -27,6 +37,9 @@ class Settings(BaseSettings):
     # Retrieval configuration
     retrieval_top_k: int = 20
     retrieval_min_score: float = 0.04
+    retrieval_min_bm25_score: float | None = (
+        None  # observe-mode until derived empirically from real bm25_score_normalized data
+    )
 
     # Hybrid search configuration
     hybrid_search_enabled: bool = True
@@ -36,19 +49,26 @@ class Settings(BaseSettings):
     semantic_cache_similarity_threshold: float = 0.90
 
     # Reranking configuration
-    reranker_enabled: bool = False
+    reranker_enabled: bool = True
     reranker_provider: str = "cohere"
     reranker_model: str = "rerank-english-v3.0"
-    reranker_top_k: int = 5
-    cohere_api_key: str = ""
+    reranker_top_k: int = 6
+    retrieval_fetch_k: int = 45  # wide enough to catch scattered/multi-section answers on this doc
+    cohere_api_key: str = "yLkBSYMAAUMR3VxOFzeY7O4a0WYjiRF6XuZKBvt3"
 
     # Contextual retrieval configuration
-    contextual_retrieval_enabled: bool = False
+    contextual_retrieval_enabled: bool = True
     contextual_context_window: int = 3
 
+    # Conversation history configuration
+    conversation_history_enabled: bool = True
+    conversation_history_max_turns: int = 5
+
     # LLM configuration
-    llm_model: str = "claude-sonnet-4-20250514"
-    llm_max_tokens: int = 2000
+    llm_model: str = "claude-sonnet-4-6"
+    # llm_max_tokens: int = 2000
+    llm_max_tokens: int = 10000
+    chunk_overlap_tokens: int = 150
 
     class Config:
         env_file = ".env"
@@ -68,7 +88,7 @@ class Settings(BaseSettings):
     def clean_secrets(cls, v):
         if isinstance(v, str):
             # Also handle potential quotes or escaped newlines
-            return v.strip().replace('"', '').replace("'", "")
+            return v.strip().replace('"', "").replace("'", "")
         return v
 
 

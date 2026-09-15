@@ -33,12 +33,16 @@ COPY src/ src/
 # Set Python path
 ENV PYTHONPATH=/app/src:/app:/app/gen/python
 
-# Expose gRPC port
+# Default transport is HTTP — expose 8000. Set TRANSPORT=grpc to fall back
+# to the gRPC server on 50051 (the entry point in rag_service.main handles
+# both based on the TRANSPORT env var).
+EXPOSE 8000
 EXPOSE 50051
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import grpc; channel = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(channel).result(timeout=5)"
+# Health check hits the HTTP /healthz by default. If TRANSPORT=grpc is set
+# at runtime, override this with a gRPC probe in your orchestrator.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -fsS http://localhost:${PORT:-8000}/healthz || exit 1
 
-# Run the server
+# Run the server (HTTP by default, see TRANSPORT env var)
 CMD ["python", "-m", "rag_service.main"]
