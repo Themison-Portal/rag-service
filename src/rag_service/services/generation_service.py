@@ -44,7 +44,7 @@ import time
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from rag_service.clients.anthropic_client import get_anthropic_client
+from rag_service.clients.anthropic_client import get_anthropic_client, get_openai_llm_client
 from rag_service.cache.semantic_cache import SemanticCacheService
 from rag_service.services.retrieval_service import RagRetrievalService
 from rag_service.config import get_settings
@@ -181,23 +181,37 @@ class RagGenerationService:
                 f"{turn.get('role', 'user')}: {turn.get('content', '')}"
                 for turn in conversation_history[-max_turns:]
             )
-            client = get_anthropic_client()
-            response = await client.messages.create(
-                model=settings.llm_model,
-                max_tokens=150,
-                system=CONDENSE_PROMPT,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": (
-                            f"<conversation>\n{history_text}\n</conversation>\n\n"
-                            f"<new_question>\n{new_question}\n</new_question>"
-                        ),
-                    }
-                ],
+            user_content = (
+                f"<conversation>\n{history_text}\n</conversation>\n\n"
+                f"<new_question>\n{new_question}\n</new_question>"
             )
-            condensed = response.content[0].text.strip()
-            self._log_llm_usage("query_condense", response)
+            provider = settings.generation_provider
+
+            if provider == "openai":
+                client = get_openai_llm_client()
+                model = settings.llm_model_openai_smart
+                response = await client.chat.completions.create(
+                    model=model,
+                    reasoning_effort="none",
+                    max_completion_tokens=150,
+                    messages=[
+                        {"role": "system", "content": CONDENSE_PROMPT},
+                        {"role": "user", "content": user_content},
+                    ],
+                )
+                condensed = (response.choices[0].message.content or "").strip()
+            else:
+                client = get_anthropic_client()
+                model = settings.llm_model
+                response = await client.messages.create(
+                    model=model,
+                    max_tokens=150,
+                    system=CONDENSE_PROMPT,
+                    messages=[{"role": "user", "content": user_content}],
+                )
+                condensed = response.content[0].text.strip()
+
+            self._log_llm_usage("query_condense", response, model=model)
             return condensed if condensed else new_question
         except Exception as e:
             logger.warning(f"[CONDENSE_QUERY] failed, using original question: {e}")
@@ -421,19 +435,22 @@ class RagGenerationService:
         organization_id: Optional[UUID] = None,
         model: Optional[str] = None,
     ) -> None:
-        """Structured log line per LLM call, for cost tracking. Separate from
-        _log_query_trace (which covers one full query) since usage needs to be
-        logged per LLM call - a single query can trigger more than one call
-        (condense + generate), and ingestion calls have no query trace at all."""
+        """Structured log line per LLM call, for cost tracking."""
         usage = getattr(response, "usage", None)
+        input_tokens = getattr(usage, "input_tokens", None)
+        output_tokens = getattr(usage, "output_tokens", None)
+        if input_tokens is None and usage is not None:
+            # OpenAI shape
+            input_tokens = getattr(usage, "prompt_tokens", None)
+            output_tokens = getattr(usage, "completion_tokens", None)
         logger.info(
             json.dumps(
                 {
                     "event": "llm_usage",
                     "call_type": call_type,
                     "model": model or getattr(response, "model", None),
-                    "input_tokens": getattr(usage, "input_tokens", None),
-                    "output_tokens": getattr(usage, "output_tokens", None),
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
                     "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
                     "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
                     "document_id": str(document_id) if document_id else None,
@@ -545,34 +562,53 @@ class RagGenerationService:
             [self._format_context_compact(chunk) for chunk in compressed_chunks]
         )
 
-        # 6. Call Claude
+        # 6. Call LLM (Anthropic baseline or OpenAI, per settings.generation_provider)
         llm_start = time.perf_counter()
         user_message = f"CONTEXT:\n{formatted_context}\n\nQUESTION: {query_text}"
 
         try:
-            client = get_anthropic_client()
-            response = await client.messages.create(
-                model=settings.llm_model,
-                max_tokens=settings.llm_max_tokens,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}],
-            )
+            provider = settings.generation_provider
+
+            if provider == "openai":
+                client = get_openai_llm_client()
+                model = settings.llm_model_openai_smart
+                response = await client.chat.completions.create(
+                    model=model,
+                    reasoning_effort="low",
+                    max_completion_tokens=settings.llm_max_tokens,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_message},
+                    ],
+                )
+                raw_content = response.choices[0].message.content or ""
+                stop_reason = response.choices[0].finish_reason  # "length" on truncation
+            else:
+                client = get_anthropic_client()
+                model = settings.llm_model
+                response = await client.messages.create(
+                    model=model,
+                    max_tokens=settings.llm_max_tokens,
+                    system=SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_message}],
+                )
+                raw_content = response.content[0].text
+                stop_reason = getattr(response, "stop_reason", None)  # "max_tokens" on truncation
 
             timing_info["llm_call_ms"] = (time.perf_counter() - llm_start) * 1000
+            timing_info["provider"] = provider
+            timing_info["model"] = model
             self._log_llm_usage(
                 "query_generation",
                 response,
                 document_id=document_id,
                 organization_id=organization_id,
+                model=model,
             )
             logger.info(f"[TIMING] LLM call: {timing_info['llm_call_ms']:.2f}ms")
 
-            raw_content = response.content[0].text
-
-            # Diagnostic logging: capture everything needed to root-cause an
-            # empty sources array without needing to reproduce the query.
-            stop_reason = getattr(response, "stop_reason", None)
-            if stop_reason == "max_tokens":
+            if stop_reason in ("max_tokens", "length"):
                 logger.warning(
                     f"[LLM_TRUNCATED] query={query_text!r} stop_reason={stop_reason} "
                     f"raw_len={len(raw_content)}"
