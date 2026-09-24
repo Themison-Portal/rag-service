@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     openai_api_key: str
     anthropic_api_key: str
 
+    # Provider switch — flip per eval run
+    generation_provider: str = "anthropic"  # "anthropic" | "openai"
+    contextual_provider: str = "anthropic"
+    disable_semantic_cache: bool = False
+
     # Database
     database_url: str  # PostgreSQL connection (asyncpg format)
 
@@ -66,7 +71,9 @@ class Settings(BaseSettings):
 
     # LLM configuration
     llm_model: str = "claude-sonnet-4-6"
-    # llm_max_tokens: int = 2000
+    llm_model_fast: str = "claude-haiku-4-5-20251001"
+    llm_model_openai_smart: str = "gpt-5.6-terra"  # new
+    llm_model_openai_fast: str = "gpt-5.6-luna"  # new
     llm_max_tokens: int = 10000
     chunk_overlap_tokens: int = 150
 
