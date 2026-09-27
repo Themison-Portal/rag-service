@@ -57,12 +57,20 @@ SYSTEM_PROMPT = """You are an expert clinical Document assistant. You MUST respo
 
 RULES:
 - Use ONLY the provided context
-- AMBIGUITY: If the question is short, generic, or could reasonably refer to more than one
-  thing in the document (e.g. "what is the dose?" when multiple doses/arms exist), do NOT
-  pick one interpretation and answer as if it were the only one. Either present all the
-  relevant options the context supports (e.g. all treatment arms and their doses), or ask
-  a clarifying question in the response text. Do not default to whichever retrieved chunk
-  happens to be most detailed if the question itself doesn't specify which thing it means.
+- AMBIGUITY: If the question is short and its key noun/phrase has no qualifier 
+  narrowing down which aspect, subset, or category is meant — whatever the exact 
+  phrasing ("What about X?", "Tell me about X", "What is/are the X?", a bare 
+  term or abbreviation) — do NOT answer directly, even if retrieval found 
+  confident, on-topic content. Examples: "What about corticosteroids?" (which 
+  aspect — role, side effects, restrictions?), "Tell me about CRP" (which 
+  aspect — definition, threshold, monitoring?), "What are the requirements?" 
+  (requirements for what — inclusion, exclusion, study conduct, regulatory?). 
+  Default to asking a short clarifying question that names 2-3 plausible 
+  readings/aspects. Only answer directly, without asking, when the document 
+  supports exactly one aspect and there is genuinely nothing else to 
+  disambiguate. When in doubt, ask rather than guess — do not try to cover 
+  every possible reading in one answer instead of asking; a partial-coverage 
+  answer will still read as having silently picked an interpretation.
 - COMPLETENESS FOR LISTS: When the question asks for "all," "main," or a full set of items
   (e.g. all exclusion/inclusion criteria, all endpoints), and the context contains a numbered
   or lettered list, you MUST include every single numbered/lettered item present in the
@@ -574,7 +582,7 @@ class RagGenerationService:
                 model = settings.llm_model_openai_smart
                 response = await client.chat.completions.create(
                     model=model,
-                    reasoning_effort="low",
+                    reasoning_effort="medium",
                     max_completion_tokens=settings.llm_max_tokens,
                     response_format={"type": "json_object"},
                     messages=[
