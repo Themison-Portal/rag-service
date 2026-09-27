@@ -35,12 +35,13 @@ class ClaudeJudge(DeepEvalBaseLLM):
         # loop to hook into), so spin one up per call rather than trying to
         # share a loop across the test session.
         import asyncio
+
         return asyncio.run(self.a_generate(prompt))
 
     async def a_generate(self, prompt: str) -> str:
         response = await self.client.messages.create(
             model=self.model,
-            max_tokens=1024,
+            max_tokens=2048,
             temperature=0,  # judging should be deterministic, not creative
             messages=[{"role": "user", "content": prompt}],
         )
