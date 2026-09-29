@@ -1,0 +1,87 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.12.6, pytest-9.1.1, pluggy-1.6.0 -- /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: deepeval-4.2.1, repeat-0.9.4, langsmith-0.10.9, xdist-3.8.0, asyncio-1.4.0, rerunfailures-16.6.1, anyio-4.14.2, Faker-40.35.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+[1mcollecting ... [0mcollected 0 items / 1 error
+Running teardown with pytest sessionfinish...
+ERROR: found no collectors for /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/evals/test_uc_protocol.py::test_factual_and_version_questions
+
+
+==================================== ERRORS ====================================
+[31m[1m__________________ ERROR collecting evals/test_uc_protocol.py __________________[0m
+
+    [0m[33m"""[39;49;00m
+    [33mevals/test_uc_protocol.py[39;49;00m
+    [33m[39;49;00m
+    [33mRegression suite for the UC-protocol RAG assistant, built from[39;49;00m
+    [33mevals/datasets/qa_pairs.json (50 hand-labeled cases).[39;49;00m
+    [33m[39;49;00m
+    [33mRun:[39;49;00m
+    [33m    deepeval test run evals/test_uc_protocol.py[39;49;00m
+    [33m[39;49;00m
+    [33mRequires:[39;49;00m
+    [33m    ANTHROPIC_API_KEY set (used both as the judge model and,[39;49;00m
+    [33m    presumably, as your generator — see note in claude_judge.py[39;49;00m
+    [33m    about correlated blind spots).[39;49;00m
+    [33m"""[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+    [94mimport[39;49;00m[90m [39;49;00m[04m[96mjson[39;49;00m[90m[39;49;00m
+    [94mimport[39;49;00m[90m [39;49;00m[04m[96mos[39;49;00m[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mpathlib[39;49;00m[90m [39;49;00m[94mimport[39;49;00m Path[90m[39;49;00m
+    [90m[39;49;00m
+    [94mimport[39;49;00m[90m [39;49;00m[04m[96mpytest[39;49;00m[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mdeepeval[39;49;00m[90m [39;49;00m[94mimport[39;49;00m assert_test[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mdeepeval[39;49;00m[04m[96m.[39;49;00m[04m[96mmetrics[39;49;00m[90m [39;49;00m[94mimport[39;49;00m ([90m[39;49;00m
+        GEval,[90m[39;49;00m
+        FaithfulnessMetric,[90m[39;49;00m
+        ContextualPrecisionMetric,[90m[39;49;00m
+    )[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mdeepeval[39;49;00m[04m[96m.[39;49;00m[04m[96mtest_case[39;49;00m[90m [39;49;00m[94mimport[39;49;00m LLMTestCase, LLMTestCaseParams[90m[39;49;00m
+    [90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96m.[39;49;00m[04m[96mclaude_judge[39;49;00m[90m [39;49;00m[94mimport[39;49;00m ClaudeJudge  [90m# wraps Claude as the judge LLM[39;49;00m[90m[39;49;00m
+>   [94mfrom[39;49;00m[90m [39;49;00m[04m[96m.[39;49;00m[04m[96mrag_client[39;49;00m[90m [39;49;00m[94mimport[39;49;00m ([90m[39;49;00m
+        run_rag_pipeline,[90m[39;49;00m
+    )  [90m# YOUR system: (question, history=None) -> (answer, chunks)[39;49;00m[90m[39;49;00m
+
+[1m[31mevals/test_uc_protocol.py[0m:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    [0m[33m"""[39;49;00m
+    [33mevals/rag_client.py[39;49;00m
+    [33m[39;49;00m
+    [33mAdapter between the eval suite and the real RagGenerationService.[39;49;00m
+    [33m"""[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+    [94mimport[39;49;00m[90m [39;49;00m[04m[96masyncio[39;49;00m[90m[39;49;00m
+    [94mimport[39;49;00m[90m [39;49;00m[04m[96mos[39;49;00m[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96muuid[39;49;00m[90m [39;49;00m[94mimport[39;49;00m UUID[90m[39;49;00m
+    [90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96msqlalchemy[39;49;00m[04m[96m.[39;49;00m[04m[96mext[39;49;00m[04m[96m.[39;49;00m[04m[96masyncio[39;49;00m[90m [39;49;00m[94mimport[39;49;00m AsyncSession, create_async_engine, async_sessionmaker[90m[39;49;00m
+    [90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mrag_service[39;49;00m[04m[96m.[39;49;00m[04m[96mservices[39;49;00m[04m[96m.[39;49;00m[04m[96mretrieval_service[39;49;00m[90m [39;49;00m[94mimport[39;49;00m RagRetrievalService[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mrag_service[39;49;00m[04m[96m.[39;49;00m[04m[96mservices[39;49;00m[04m[96m.[39;49;00m[04m[96mgeneration_service[39;49;00m[90m [39;49;00m[94mimport[39;49;00m RagGenerationService[90m[39;49;00m
+    [94mfrom[39;49;00m[90m [39;49;00m[04m[96mrag_service[39;49;00m[04m[96m.[39;49;00m[04m[96mconfig[39;49;00m[90m [39;49;00m[94mimport[39;49;00m get_settings[90m[39;49;00m
+    [90m[39;49;00m
+    settings = get_settings()[90m[39;49;00m
+    [90m[39;49;00m
+    [90m# Fixed test fixtures — the UC protocol doc already ingested in your eval/staging DB.[39;49;00m[90m[39;49;00m
+>   EVAL_DOCUMENT_ID = UUID(os.environ[[33m"[39;49;00m[33mEVAL_DOCUMENT_ID[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+
+[1m[31mevals/rag_client.py[0m:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = environ({'NVM_INC': '/Users/kumarithotapalli/.nvm/versions/node/v22.13.1/include/node', 'TERM_PROGRAM': 'vscode', 'PYE...AL_VERBOSE_MODE': '1', 'PYTEST_VERSION': '9.1.1', 'DEEPEVAL_TELEMETRY_RUN_ID': '3f0fd0d5-8774-474f-be70-62cf7514b6ff'})
+key = 'EVAL_DOCUMENT_ID'
+
+>   [0m[04m[91m?[39;49;00m[04m[91m?[39;49;00m[04m[91m?[39;49;00m[90m[39;49;00m
+[1m[31mE   KeyError: 'EVAL_DOCUMENT_ID'[0m
+
+[1m[31m<frozen os>[0m:714: KeyError
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m evals/test_uc_protocol.py - KeyError: 'EVAL_DOCUMENT_ID'
+[31m========================= [33m3 warnings[0m, [31m[1m1 error[0m[31m in 3.27s[0m[31m =========================[0m
+No test cases found, please try again.

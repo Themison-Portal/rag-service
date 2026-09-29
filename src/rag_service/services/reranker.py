@@ -12,6 +12,7 @@ over-fetch (see retrieval_fetch_k) and hand everything to rerank(),
 which trims down to reranker_top_k.
 """
 
+import asyncio
 import logging
 import time
 from typing import List, Tuple
@@ -24,12 +25,26 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 _cohere_client: cohere.AsyncClient | None = None
+_cohere_client_loop: asyncio.AbstractEventLoop | None = None
 
 
 def get_cohere_client() -> cohere.AsyncClient:
-    global _cohere_client
-    if _cohere_client is None:
+    """
+    Returns a cached Cohere AsyncClient, recreating it if the current
+    running event loop differs from the one the cached client was built
+    for. cohere.AsyncClient wraps an httpx.AsyncClient whose connection
+    pool is bound to the loop active when it first opens a connection -
+    a plain module-level singleton breaks the moment that loop closes
+    (e.g. the eval harness in evals/rag_client.py calls asyncio.run()
+    once per question, giving each question a fresh loop). In production,
+    where one event loop lives for the life of the process, this check
+    is a no-op and the client is reused exactly as before.
+    """
+    global _cohere_client, _cohere_client_loop
+    current_loop = asyncio.get_event_loop()
+    if _cohere_client is None or _cohere_client_loop is not current_loop:
         _cohere_client = cohere.AsyncClient(api_key=settings.cohere_api_key)
+        _cohere_client_loop = current_loop
     return _cohere_client
 
 
@@ -46,7 +61,6 @@ class RerankerService:
         self.model = settings.reranker_model
         self.top_k = settings.reranker_top_k
         self.enabled = settings.reranker_enabled
-        self.client = get_cohere_client() if self.provider == "cohere" else None
 
     async def rerank(
         self,
@@ -80,15 +94,17 @@ class RerankerService:
             timing_info["reranker_skipped"] = "disabled"
             return chunks[:effective_top_n], timing_info
 
-        if self.provider != "cohere" or self.client is None:
+        if self.provider != "cohere":
             timing_info["reranker_skipped"] = f"unsupported_provider:{self.provider}"
             return chunks[:effective_top_n], timing_info
+
+        client = get_cohere_client()
 
         rerank_start = time.perf_counter()
         try:
             documents = [c.get("page_content", "") for c in chunks]
 
-            response = await self.client.rerank(
+            response = await client.rerank(
                 model=self.model,
                 query=query_text,
                 documents=documents,

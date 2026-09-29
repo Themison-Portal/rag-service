@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str
 
     # Provider switch — flip per eval run
-    generation_provider: str = "anthropic"  # "anthropic" | "openai"
-    contextual_provider: str = "anthropic"
+    generation_provider: str = "openai"  # "anthropic" | "openai"
+    contextual_provider: str = "openai"
     disable_semantic_cache: bool = False
 
     # Database

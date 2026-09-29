@@ -1,0 +1,812 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.12.6, pytest-9.1.1, pluggy-1.6.0 -- /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/kumarithotapalli/workspace/Themison/New Latest RAG Service/rag-service
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: deepeval-4.2.1, repeat-0.9.4, langsmith-0.10.9, xdist-3.8.0, asyncio-1.4.0, rerunfailures-16.6.1, anyio-4.14.2, Faker-40.35.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+[1mcollecting ... [0mcollected 47 items
+
+evals/test_uc_protocol.py::test_factual_and_version_questions[01_Factual] 
+[1m-------------------------------- live log call ---------------------------------[0m
+[32mINFO    [0m rag_service.clients.openai_client:openai_client.py:26 Initialized OpenAI embedding client with model: text-embedding-3-small
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:48 [TIMING] Embedding generated in 2099.15ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:104 [TIMING] Vector search: 5627.14ms, found 45 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:158 [TIMING] BM25 search: 419.76ms, found 1 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:219 [HYBRID] RRF fusion: 45 vector + 1 BM25 -> 43 merged
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:337 [HYBRID] Search complete: 43 results in 6050.70ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:281 [BM25_SCORE_OBSERVE] normalized scores for BM25-only chunks: [0.0]
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.cohere.com/v1/rerank "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.reranker:reranker.py:114 [RERANK] 43 -> 6 chunks in 766.12ms using rerank-english-v3.0
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:410 [TIMING] Retrieval total: 6817.28ms, 6 chunks after filter+rerank
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:305 [COMPRESSION] 6 chunks -> 5 compressed
+[32mINFO    [0m rag_service.clients.anthropic_client:anthropic_client.py:37 Initialized OpenAI LLM client
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:446 {"event": "llm_usage", "call_type": "query_generation", "model": "gpt-5.6-terra", "input_tokens": 2594, "output_tokens": 369, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "document_id": "ae08b6b1-fdc6-4304-8592-d02473a84ecc", "organization_id": "ee5b5b9f-1848-4b78-8d55-5662f02ad471"}
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:609 [TIMING] LLM call: 4779.25ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:698 [TIMING] Generation complete: 13697.15ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:427 {"event": "rag_query_trace", "query": "What is the primary endpoint of the study?", "retrieval_query": null, "system_prompt_version": "440b2406", "retrieved_chunks": [{"title": "Protocol Ulcerative Colitis", "page": 68, "section": "9.6.2 Primary Endpoint", "score": 0.99835795, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 24, "section": "Primary Endpoints", "score": 0.9974788, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 30, "section": "3.4.2 Selection of Endpoints", "score": 0.99196917, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 13, "section": "Data Analyses", "score": null, "scores": [0.98555213, 0.98555213], "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 16, "section": "Protocol No.: CTJ301UC201", "score": 0.94122344, "scores": null, "had_context": true}], "context_char_count": 6744, "response": "Source: Protocol Ulcerative Colitis\n\nThe primary efficacy endpoint is clinical and endoscopic remission at Week 12 in the ITT population, defined as a full Mayo score \u22642, no individual subscore >1, and rectal bleeding subscore = 0.\n[Section 9.6.2 Primary Endpoint \u00b7 p.68]\n\nThe protocol also identifies safety primary endpoints: adverse events, vital signs, 12-lead electrocardiography (ECG), and clinical safety laboratory abnormalities.\n[Section Primary Endpoints \u00b7 p.24]", "sources": [{"name": "Protocol Ulcerative Colitis", "page": 68, "section": "9.6.2 Primary Endpoint", "exactText": "The primary efficacy endpoint is clinical and endoscopic remission (defined as a full Mayo score \u22642, no individual subscore >1, rectal bleeding subscore = 0) at Week 12 in the ITT population.", "bboxes": [[71.99999999999997, 721.7039829101564, 558.8399999999996, 605.2149752178486]], "relevance": "high"}, {"name": "Protocol Ulcerative Colitis", "page": 24, "section": "Primary Endpoints", "exactText": "- Clinical and endoscopic remission at Week 12, defined as a full Mayo score \u2264 2, no individual subscore >1, rectal bleeding subscore = 0.\n- Adverse events, vital signs, 12-lead Electrocardiography (ECG), and clinical safety laboratory abnormalities.", "bboxes": [[89.88000000000005, 432.8399829101563, 509.16, 406.8549752178486]], "relevance": "high"}], "timing": {"response_cache_hit": false, "semantic_cache_hit": false, "chunks_compressed": true, "condense_ms": 0.0007082708179950714, "query_condensed": false, "embedding_ms": 2099.149000365287, "embedding_cache_hit": false, "retrieval": {"chunk_cache_hit": false, "confidence_filter_applied": true, "confidence_filter_threshold": 0.04, "confidence_filter_bm25_threshold": null, "confidence_filter_input_count": 43, "confidence_filter_kept_count": 43, "confidence_filter_dropped_count": 0, "confidence_filter_kept_scores": [0.5763, 0.5437, 0.4701, 0.5723, 0.5656, 0.5654, 0.56, 0.5543, 0.5374, 0.5307, 0.5189, 0.5128, 0.5083, 0.5074, 0.4962, 0.4948, 0.4932, 0.4926, 0.4842, 0.4842, 0.483, 0.4721, 0.4717, 0.4694, 0.469, 0.468, 0.4628, 0.462, 0.4607, 0.4602, 0.4592, 0.459, 0.4576, 0.4576, 0.4575, 0.4561, 0.4556, 0.4503, 0.4486, 0.4483, 0.4478, 0.4476], "confidence_filter_dropped_scores": [], "confidence_filter_bm25_only_scores_normalized": [0.0], "hybrid_search": true, "cache_hit": true, "embedding_ms": 0.0, "db_search_ms": 5627.140083350241, "hybrid_parallel_ms": 6050.701749976724, "vector_count": 45, "bm25_count": 1, "fused_count": 43, "reranker_enabled": true, "reranker_provider": "cohere", "reranker_ms": 766.1199583671987, "reranker_input_count": 43, "reranker_output_count": 6, "reranker_model": "rerank-english-v3.0", "retrieval_total_ms": 6817.275291308761}, "original_chunk_count": 6, "compression_ms": 0.15725009143352509, "compressed_chunk_count": 5, "llm_call_ms": 4779.248625040054, "provider": "openai", "model": "gpt-5.6-terra", "generation_total_ms": 13697.148916777223}}
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+Determine if 'actual_output' is factually correct and complete relative to 'expected_output'. For questions about stratification factors, safety committee names, or country lists, the answer MUST reflect the CURRENT protocol version (v1.1), not a superseded value, unless it explicitly labels the older value as historical/superseded. 
+ 
+Evaluation Steps:
+[
+    "Compare the 'actual_output' against the 'expected_output' to determine if the core facts, values, or lists provided are identical or semantically equivalent, noting any omissions or additions.",
+    "Check whether the 'actual_output' reflects the CURRENT protocol version (v1.1) values for any stratification factors, safety committee names, or country lists mentioned in the 'input', and flag any instance where a superseded or outdated value is presented as current.",
+    "If the 'actual_output' references an older or historical value, verify that it is explicitly labeled as historical or superseded; if it is not labeled as such, treat the response as factually incorrect regardless of partial matches with 'expected_output'.",
+    "Assign a final correctness judgment: mark the 'actual_output' as correct only if it is both factually accurate relative to 'expected_output' AND fully aligned with the v1.1 protocol requirements specified in the evaluation criteria, with no unlabeled outdated information."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 1.0
+ 
+Reason: The actual output accurately captures all core facts from the expected output: clinical and endoscopic remission at Week 12 with the full Mayo score ≤2, no individual subscore >1, rectal bleeding subscore = 0, plus the safety primary endpoints (adverse events, vital signs, 12-lead ECG, and clinical safety laboratory abnormalities). The information is semantically equivalent and complete. No outdated or superseded values are presented, and the response aligns with the expected output without omissions or incorrect additions. The additional context (ITT population, section references) enhances rather than contradicts the expected output.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Contextual Precision Verbose Logs
+**************************************************
+
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": "This context directly defines the primary efficacy endpoint as 'clinical and endoscopic remission (defined as a full Mayo score \u22642, no individual subscore >1, rectal bleeding subscore = 0) at Week 12 in the ITT population,' which aligns with the expected output."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context explicitly lists both primary endpoints: 'Clinical and endoscopic remission at Week 12, defined as a full Mayo score \u2264 2, no individual subscore >1, rectal bleeding subscore = 0' and 'Adverse events, vital signs, 12-lead Electrocardiography (ECG), and clinical safety laboratory abnormalities,' which fully matches the expected output."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context describes the primary efficacy endpoint as 'a binary endpoint of clinical and endoscopic remission at Week 12, defined as a full Mayo score \u22642, no individual subscore >1, and rectal bleeding subscore = 0,' which is relevant to the expected output, though it does not mention the safety endpoints."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context states 'The primary efficacy endpoint is clinical and endoscopic remission at Week 12,' which is partially relevant to the expected output, but does not include the safety-related primary endpoints such as adverse events, vital signs, ECG, and lab abnormalities."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context only contains a protocol number and a table of contents-like reference listing section numbers and terms like 'Primary Endpoint' and 'Serious Adverse Event,' but provides no substantive information about what the primary endpoint actually is."
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because all relevant nodes are ranked higher than the irrelevant node. The first four nodes all provide substantive information about the primary endpoint, with the first node directly defining it as 'clinical and endoscopic remission (defined as a full Mayo score ≤2, no individual subscore >1, rectal bleeding subscore = 0) at Week 12 in the ITT population,' and the subsequent nodes building on this with additional details. The only irrelevant node, ranked fifth (last), merely contains 'a protocol number and a table of contents-like reference listing section numbers and terms like Primary Endpoint and Serious Adverse Event' without any meaningful content. The ranking is perfectly ordered, with all useful nodes appearing before the irrelevant one.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Faithfulness Verbose Logs
+**************************************************
+
+Truths (limit=None):
+[
+    "The primary efficacy endpoint is clinical and endoscopic remission at Week 12.",
+    "Clinical and endoscopic remission is defined as a full Mayo score ≤2, no individual subscore >1, and rectal bleeding subscore = 0.",
+    "The primary endpoint is a binary outcome measured as remission status yes or no.",
+    "The primary endpoint is analyzed using a logistic regression model.",
+    "The logistic regression model includes treatment and randomisation-stratification factors as fixed effects and baseline full Mayo score as a covariate.",
+    "The randomisation-stratification factors include prior corticosteroids treatment and consent to participate in PK substudy.",
+    "A patient with missing data on remission status will be assumed to be not in remission.",
+    "Sensitivity analyses using different analysis sets and missing data handling will be detailed in the SAP.",
+    "The full Mayo score ranges from 0 to 12, where a higher score indicates worse condition.",
+    "The full Mayo score is based on the clinician's scoring of clinical signs and symptoms as well as endoscopic scoring of gross colonic mucosal inflammation.",
+    "There is no validated scale for scoring the severity of inflammation or clinical symptoms in UC.",
+    "The Mayo score has been extensively used in earlier clinical trials in UC.",
+    "The Mayo score shows a good correlation between the full Mayo score and the clinician-rated components only, known as the partial Mayo score without endoscopy.",
+    "The partial Mayo score without endoscopy can be used to accurately predict inflammatory activity and the evolution of a treatment effect even in the absence of endoscopy.",
+    "Quantitative variables will be described with the number of non-missing values, mean, standard deviation, median, and minimum/maximum values.",
+    "Qualitative variables will be described with the number and percentage of patients with each qualitative characteristic.",
+    "Missing values will not be included in the calculation of percentages.",
+    "All data will be listed by individual patient and study visit.",
+    "All dichotomised secondary endpoints will be analysed using a repeated logistic regression model.",
+    "Continuous endpoints will be analysed using a repeated measures Analysis of Covariance (ANCOVA) model.",
+    "Patients in both the placebo and treatment groups will be split into subgroups based on the baseline level of IL-6/sIL-6R complexes.",
+    "Comparisons in endpoints will be made for different subgroups based on IL-6/sIL-6R complex levels.",
+    "The study protocol number is CTJ301UC201.",
+    "Adverse events, vital signs, 12-lead Electrocardiography (ECG), and clinical safety laboratory abnormalities are listed as primary endpoints.",
+    "The primary endpoint is assessed in the ITT population."
+] 
+ 
+Claims:
+[
+    "The primary efficacy endpoint is clinical and endoscopic remission at Week 12 in the ITT population, defined as a full Mayo score ≤2, no individual subscore >1, and rectal bleeding subscore = 0.",
+    "The primary efficacy endpoint is described in Section 9.6.2 Primary Endpoint on page 68 of the Protocol Ulcerative Colitis document.",
+    "The protocol identifies safety primary endpoints which include adverse events, vital signs, 12-lead electrocardiography (ECG), and clinical safety laboratory abnormalities.",
+    "The safety primary endpoints are described in the Primary Endpoints section on page 24 of the Protocol Ulcerative Colitis document."
+] 
+ 
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide any information about section numbers or page numbers in the Protocol Ulcerative Colitis document, so this claim cannot be verified."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide any information about section numbers or page numbers in the Protocol Ulcerative Colitis document, so this claim about page 24 cannot be verified."
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because the actual output is perfectly faithful to the retrieval context with no contradictions found!
+
+======================================================================
+
+[32mPASSED[0m
+evals/test_uc_protocol.py::test_factual_and_version_questions[02_Factual] 
+[1m-------------------------------- live log call ---------------------------------[0m
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /embeddings in 0.386033 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:48 [TIMING] Embedding generated in 642.76ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:104 [TIMING] Vector search: 5688.04ms, found 45 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:158 [TIMING] BM25 search: 435.03ms, found 7 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:219 [HYBRID] RRF fusion: 45 vector + 7 BM25 -> 52 merged
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:337 [HYBRID] Search complete: 52 results in 6126.55ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:281 [BM25_SCORE_OBSERVE] normalized scores for BM25-only chunks: [1.0, 0.6338, 0.6128, 0.6128, 0.6128, 0.4826, 0.0]
+[31m[1mERROR   [0m rag_service.services.reranker:reranker.py:121 [RERANK_ERROR] Falling back to pre-rerank order: Event loop is closed
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:410 [TIMING] Retrieval total: 6132.00ms, 6 chunks after filter+rerank
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:305 [COMPRESSION] 6 chunks -> 5 compressed
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /chat/completions in 0.478000 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:446 {"event": "llm_usage", "call_type": "query_generation", "model": "gpt-5.6-terra", "input_tokens": 2863, "output_tokens": 242, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "document_id": "ae08b6b1-fdc6-4304-8592-d02473a84ecc", "organization_id": "ee5b5b9f-1848-4b78-8d55-5662f02ad471"}
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:609 [TIMING] LLM call: 4240.17ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:698 [TIMING] Generation complete: 11016.73ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:427 {"event": "rag_query_trace", "query": "What is the investigational medicinal product?", "retrieval_query": null, "system_prompt_version": "440b2406", "retrieved_chunks": [{"title": "Protocol Ulcerative Colitis", "page": 39, "section": "5.1 Treatments Administered", "score": 0.01639344262295082, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 42, "section": "5.7 Return and Destruction of Medicinal Products and Auxiliary Supplies", "score": null, "scores": [0.01639344262295082, 0.016129032258064516], "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 1, "section": "A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis", "score": 0.016129032258064516, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 40, "section": "5.4 Conditions for Storage and Use", "score": 0.015873015873015872, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 12, "section": "Investigational Medicinal Product (IMP)", "score": 0.015873015873015872, "scores": null, "had_context": true}], "context_char_count": 6864, "response": "Source: Protocol Ulcerative Colitis\n\nThe investigational medicinal product is TJ301 (solution for injection), also referred to as FE 999301 and Olamkicept. It is administered intravenously.\n[Section A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis \u00b7 p.1]", "sources": [{"name": "Protocol Ulcerative Colitis", "page": 1, "section": "A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis", "exactText": "Investigational Medicinal Product:\nTJ301 (solution for injection), also referred to as FE 999301 and Olamkicept", "bboxes": [[72.0, 578.6639829101563, 168.0, 568.2525283647018]], "relevance": "high"}], "timing": {"response_cache_hit": false, "semantic_cache_hit": false, "chunks_compressed": true, "condense_ms": 0.0014170072972774506, "query_condensed": false, "embedding_ms": 642.7608337253332, "embedding_cache_hit": false, "retrieval": {"chunk_cache_hit": false, "confidence_filter_applied": true, "confidence_filter_threshold": 0.04, "confidence_filter_bm25_threshold": null, "confidence_filter_input_count": 52, "confidence_filter_kept_count": 52, "confidence_filter_dropped_count": 0, "confidence_filter_kept_scores": [0.5965, 0.5631, 0.5626, 0.5614, 0.5212, 0.5104, 0.4998, 0.4963, 0.4766, 0.4707, 0.4646, 0.4564, 0.4544, 0.4536, 0.4531, 0.4508, 0.4505, 0.4502, 0.4444, 0.4428, 0.441, 0.4402, 0.4392, 0.4382, 0.4355, 0.4345, 0.4331, 0.4325, 0.4311, 0.43, 0.4283, 0.4253, 0.425, 0.4236, 0.4205, 0.4189, 0.4178, 0.4176, 0.4159, 0.4158, 0.4155, 0.4148, 0.4145, 0.4142, 0.4105], "confidence_filter_dropped_scores": [], "confidence_filter_bm25_only_scores_normalized": [1.0, 0.6338, 0.6128, 0.6128, 0.6128, 0.4826, 0.0], "hybrid_search": true, "cache_hit": true, "embedding_ms": 0.0, "db_search_ms": 5688.03875008598, "hybrid_parallel_ms": 6126.551458146423, "vector_count": 45, "bm25_count": 7, "fused_count": 52, "reranker_enabled": true, "reranker_provider": "cohere", "reranker_error": "Event loop is closed", "reranker_ms": 3.394665662199259, "retrieval_total_ms": 6131.998708937317}, "original_chunk_count": 6, "compression_ms": 0.46725012362003326, "compressed_chunk_count": 5, "llm_call_ms": 4240.169374737889, "provider": "openai", "model": "gpt-5.6-terra", "generation_total_ms": 11016.72691712156}}
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+Determine if 'actual_output' is factually correct and complete relative to 'expected_output'. For questions about stratification factors, safety committee names, or country lists, the answer MUST reflect the CURRENT protocol version (v1.1), not a superseded value, unless it explicitly labels the older value as historical/superseded. 
+ 
+Evaluation Steps:
+[
+    "Compare the 'actual_output' against the 'expected_output' to determine if the core facts, values, or lists provided are identical or semantically equivalent.",
+    "Check whether the 'actual_output' reflects the CURRENT protocol version (v1.1) values for any stratification factors, safety committee names, or country lists mentioned in the 'input', ensuring it does not present a superseded value as current.",
+    "If the 'actual_output' references an older or superseded value, verify whether it explicitly labels that value as historical or superseded; if it does not, mark the response as incorrect regardless of partial accuracy.",
+    "Assess the completeness of the 'actual_output' relative to the 'expected_output' by confirming that no required elements (e.g., missing countries, omitted stratification factors, incorrect committee names) are absent or incorrectly stated."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 0.7
+ 
+Reason: The actual output correctly identifies the investigational medicinal product as TJ301 (FE 999301, Olamkicept) and mentions it is a solution for injection administered intravenously. However, it omits the specific concentration of '15 mg/mL' which is part of the expected output. The core identification of the product is accurate and semantically equivalent, but the missing concentration detail represents an incomplete response relative to the expected output.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Contextual Precision Verbose Logs
+**************************************************
+
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": "This context directly identifies the IMP as 'TJ301 (15 mg/mL in solution for injection)' and provides detailed formulation information, which aligns with the expected output of 'TJ301 (FE 999301, Olamkicept), 15 mg/mL solution for injection.'"
+    },
+    {
+        "verdict": "no",
+        "reason": "This context discusses the return and destruction of medicinal products but does not provide any specific information about what the IMP is or its formulation details."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context explicitly states 'Investigational Medicinal Product: TJ301 (solution for injection), also referred to as FE 999301 and Olamkicept', which directly matches the expected output including the alternative names FE 999301 and Olamkicept."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context discusses storage and administration conditions for TJ301 but does not specifically identify the IMP by name, concentration, or alternative names relevant to the expected output."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context provides dosing and infusion details for the IMP but does not identify the IMP by its full name including 'FE 999301' or 'Olamkicept', nor does it specify the 15 mg/mL concentration in the context of identifying the product."
+    }
+]
+ 
+Score: 0.8333333333333333
+Reason: The score is 0.83 because the two relevant nodes are not perfectly ranked consecutively at the top. The first node correctly identifies the IMP as 'TJ301 (15 mg/mL in solution for injection)' and is ranked first, which is good. However, the second node in the retrieval contexts is irrelevant, discussing 'the return and destruction of medicinal products' without providing any specific information about the IMP, yet it is ranked above the third node which explicitly states 'Investigational Medicinal Product: TJ301 (solution for injection), also referred to as FE 999301 and Olamkicept' — a highly relevant match. Additionally, the fourth and fifth nodes are irrelevant to identifying the IMP, discussing storage conditions and dosing details respectively, and are correctly ranked lower. The score is not higher because the irrelevant second node is ranked above the relevant third node, disrupting the ideal ordering of relevant content.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Faithfulness Verbose Logs
+**************************************************
+
+Truths (limit=None):
+[
+    "TJ301 is formulated at a concentration of 15 mg/mL in solution for injection.",
+    "The solution for injection contains 25 mM histidine, 200 mM sucrose, and 0.1 mg/mL polysorbate 20 in aqueous solution.",
+    "TJ301 is provided by Leading Biopharm Limited.",
+    "TJ301 is manufactured by Octoplus Development B.V., now known as Dr. Reddy's Research & Development B.V., located in the Netherlands.",
+    "TJ301 is administered via intravenous infusion.",
+    "TJ301 is supplied in 5 mL vials.",
+    "TJ301 is diluted in 250 mL 5% (w/v) glucose for infusion.",
+    "TJ301 is stored at -20 ± 5°C.",
+    "TJ301 does not have market authorisation.",
+    "The placebo contains the same solution as TJ301 but without the active substance TJ301.",
+    "Used medicinal products can be destroyed at the trial site in accordance with local requirements after drug accountability has been finalised, signed-off by the Investigator, and verified by the Monitor.",
+    "Unused IMP vials must be returned to the Sponsor for destruction at the end of the trial.",
+    "The trial is a Phase II, Randomized, Double-blind, Placebo-controlled Study.",
+    "The trial evaluates the safety and efficacy of TJ301 in patients with Active Ulcerative Colitis.",
+    "The protocol number for this trial is CTJ301UC201.",
+    "TJ301 is also referred to as FE 999301 and Olamkicept.",
+    "The trial is multicenter and international, conducted across Mainland China, Taiwan, Republic of Korea, and Australia.",
+    "The Coordinating Investigator is Prof. Dr. Minhu Chen, Chair of the Department of Gastroenterology and Hepatology and Vice President of The First Affiliated Hospital, Sun Yat-sen University, Guangzhou, China.",
+    "Prof. Dr. Stefan Schreiber from the University Hospital Schleswig-Holstein in Kiel, Germany, serves on the expert committee.",
+    "The Sponsor of the trial is Leading Biopharm Limited.",
+    "The Sponsor contact is Yin Liu, located at Suite 802, OmniVision Park West Tower, 88 Shangke Road, Pudong, Shanghai 201210, China.",
+    "Both placebo and TJ301 are stored at -20 ± 5°C and thawed at the pharmacy before use.",
+    "Once reconstituted for infusion, the diluted IMPs should be stored at 15-25°C and used within 3 hours of preparation.",
+    "TJ301 is administered as intravenous infusions every 2 weeks for 12 weeks, totaling 6 infusions.",
+    "The infusion volume used is 290 mL.",
+    "The infusion time is 2 hours.",
+    "After the first and second infusions, patients are monitored for infusion reactions for three hours post-infusion.",
+    "For remaining infusions, patients are monitored for one hour post-infusion.",
+    "The placebo dose uses 8 vials, with a drug volume of 40 mL, 250 mL of 5% (w/v) glucose, and a TJ301 concentration of 0 mg/mL, resulting in an infusion volume of 290 mL.",
+    "The 300 mg dose uses 4 vials of placebo and 4 vials of TJ301, with a drug volume of 40 mL, 250 mL of 5% (w/v) glucose, and a TJ301 concentration of 1.03 mg/mL, resulting in an infusion volume of 290 mL.",
+    "The 600 mg dose uses 8 vials of TJ301, with a drug volume of 40 mL, 250 mL of 5% (w/v) glucose, and a TJ301 concentration of 2.07 mg/mL, resulting in an infusion volume of 290 mL."
+] 
+ 
+Claims:
+[
+    "The investigational medicinal product TJ301 is a solution for injection.",
+    "TJ301 is also referred to as FE 999301 and Olamkicept.",
+    "TJ301 is administered intravenously.",
+    "There is a Phase II study evaluating TJ301 that is randomized, double-blind, and placebo-controlled.",
+    "The Phase II study is designed to evaluate the safety and efficacy of TJ301 (FE 999301).",
+    "The Phase II study involves patients with active Ulcerative Colitis.",
+    "The source of this information is a protocol related to Ulcerative Colitis."
+] 
+ 
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide information about the source of the information being a protocol. While the context does reference a protocol number (CTJ301UC201) and trial details related to Ulcerative Colitis, it cannot be confirmed that the claim about the 'source' being a protocol is directly supported."
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because the actual output is perfectly faithful to the retrieval context with no contradictions found!
+
+======================================================================
+
+[32mPASSED[0m
+evals/test_uc_protocol.py::test_factual_and_version_questions[03_Factual] 
+[1m-------------------------------- live log call ---------------------------------[0m
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /embeddings in 0.375909 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:48 [TIMING] Embedding generated in 1398.00ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:104 [TIMING] Vector search: 6190.76ms, found 45 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:158 [TIMING] BM25 search: 461.70ms, found 3 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:219 [HYBRID] RRF fusion: 45 vector + 3 BM25 -> 45 merged
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:337 [HYBRID] Search complete: 45 results in 6656.37ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:281 [BM25_SCORE_OBSERVE] normalized scores for BM25-only chunks: [1.0, 0.0078, 0.0]
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.cohere.com/v1/rerank "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.reranker:reranker.py:114 [RERANK] 45 -> 6 chunks in 342.21ms using rerank-english-v3.0
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:410 [TIMING] Retrieval total: 7000.02ms, 6 chunks after filter+rerank
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:305 [COMPRESSION] 6 chunks -> 6 compressed
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /chat/completions in 0.461939 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:446 {"event": "llm_usage", "call_type": "query_generation", "model": "gpt-5.6-terra", "input_tokens": 2658, "output_tokens": 197, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "document_id": "ae08b6b1-fdc6-4304-8592-d02473a84ecc", "organization_id": "ee5b5b9f-1848-4b78-8d55-5662f02ad471"}
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:609 [TIMING] LLM call: 3550.12ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:698 [TIMING] Generation complete: 11949.81ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:427 {"event": "rag_query_trace", "query": "What is the indication for this study?", "retrieval_query": null, "system_prompt_version": "440b2406", "retrieved_chunks": [{"title": "Protocol Ulcerative Colitis", "page": 1, "section": "A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis", "score": 0.62897736, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 10, "section": "Exclusion Criteria", "score": 0.36523023, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 66, "section": "9.1 Determination of Sample Size", "score": 0.3060083, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 24, "section": "Primary Objective", "score": 0.06705629, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 9, "section": "Inclusion Criteria", "score": 0.015072629, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 34, "section": "4.1.1 Inclusion Criteria", "score": 0.00930395, "scores": null, "had_context": true}], "context_char_count": 6445, "response": "Source: Protocol Ulcerative Colitis\n\nThe indication is active ulcerative colitis.\n[A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis \u00b7 p.1]", "sources": [{"name": "Protocol Ulcerative Colitis", "page": 1, "section": "A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis", "exactText": "Indication:\nActive Ulcerative Colitis", "bboxes": [[72.0, 578.6639829101563, 168.0, 568.2525283647018]], "relevance": "high"}], "timing": {"response_cache_hit": false, "semantic_cache_hit": false, "chunks_compressed": false, "condense_ms": 0.0010826624929904938, "query_condensed": false, "embedding_ms": 1398.0042501352727, "embedding_cache_hit": false, "retrieval": {"chunk_cache_hit": false, "confidence_filter_applied": true, "confidence_filter_threshold": 0.04, "confidence_filter_bm25_threshold": null, "confidence_filter_input_count": 45, "confidence_filter_kept_count": 45, "confidence_filter_dropped_count": 0, "confidence_filter_kept_scores": [0.4237, 0.4335, 0.416, 0.4491, 0.43, 0.4292, 0.4279, 0.4242, 0.422, 0.4219, 0.42, 0.4196, 0.4176, 0.4163, 0.416, 0.4155, 0.4154, 0.4152, 0.4139, 0.4134, 0.4133, 0.4126, 0.4112, 0.411, 0.4109, 0.4102, 0.4092, 0.4092, 0.4091, 0.4089, 0.4081, 0.408, 0.4074, 0.4067, 0.4046, 0.4044, 0.4043, 0.4034, 0.4029, 0.4022, 0.4011, 0.4005], "confidence_filter_dropped_scores": [], "confidence_filter_bm25_only_scores_normalized": [1.0, 0.0078, 0.0], "hybrid_search": true, "cache_hit": true, "embedding_ms": 0.0, "db_search_ms": 6190.75733423233, "hybrid_parallel_ms": 6656.371999997646, "vector_count": 45, "bm25_count": 3, "fused_count": 45, "reranker_enabled": true, "reranker_provider": "cohere", "reranker_ms": 342.20512537285686, "reranker_input_count": 45, "reranker_output_count": 6, "reranker_model": "rerank-english-v3.0", "retrieval_total_ms": 7000.018250197172}, "original_chunk_count": 6, "compression_ms": 0.173875130712986, "compressed_chunk_count": 6, "llm_call_ms": 3550.1224170438945, "provider": "openai", "model": "gpt-5.6-terra", "generation_total_ms": 11949.812499806285}}
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+Determine if 'actual_output' is factually correct and complete relative to 'expected_output'. For questions about stratification factors, safety committee names, or country lists, the answer MUST reflect the CURRENT protocol version (v1.1), not a superseded value, unless it explicitly labels the older value as historical/superseded. 
+ 
+Evaluation Steps:
+[
+    "Compare the 'actual_output' against the 'expected_output' to determine if the core factual content matches, paying close attention to specific details such as stratification factors, committee names, or country lists.",
+    "Verify that the 'actual_output' reflects the CURRENT protocol version (v1.1) values as established in the 'expected_output', and not values from a superseded or older protocol version, unless the older value is explicitly labeled as historical or superseded.",
+    "Check the 'actual_output' for completeness by ensuring no required elements present in the 'expected_output' are omitted, and that no incorrect or outdated information has been substituted in place of current v1.1 values.",
+    "If the 'actual_output' presents outdated protocol values without clearly labeling them as superseded or historical, mark it as incorrect even if the information was accurate in a prior version, using the 'expected_output' as the ground truth for what the current protocol specifies."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 1.0
+ 
+Reason: The actual output correctly identifies the indication as 'active ulcerative colitis,' which matches the expected output exactly. The response includes additional context from the protocol title, which supports rather than contradicts the core factual content. No outdated or incorrect information is present.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Contextual Precision Verbose Logs
+**************************************************
+
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": "This document explicitly states 'Indication: Active Ulcerative Colitis', which directly answers the question about the indication for the study."
+    },
+    {
+        "verdict": "no",
+        "reason": "This document lists exclusion criteria and mentions conditions like 'ulcerative colitis limited to the rectum' and 'Crohn's disease', but does not directly state the indication for the study."
+    },
+    {
+        "verdict": "no",
+        "reason": "This document discusses sample size determination and the proof-of-concept nature of the trial, but does not mention the indication for the study."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This document states the primary objective is 'to explorate the safety and efficacy of TJ301 in patients with active ulcerative colitis', which indirectly confirms the indication as active ulcerative colitis."
+    },
+    {
+        "verdict": "no",
+        "reason": "This document mentions inclusion criteria requiring 'Active UC confirmed by colonoscopy' and 'Active UC with a full Mayo score \u2265 5', which indirectly confirms the indication but does not explicitly state it."
+    },
+    {
+        "verdict": "no",
+        "reason": "This document also lists inclusion criteria referencing 'Active UC confirmed by colonoscopy' and 'Active UC with a full Mayo score \u2265 5', which indirectly confirms the indication but does not explicitly state it."
+    }
+]
+ 
+Score: 0.75
+Reason: The score is 0.75 because the most relevant node is ranked first, explicitly stating 'Active Ulcerative Colitis' as the indication, which is ideal. However, the second and third nodes in the retrieval contexts are irrelevant — the second node only discusses exclusion criteria without directly stating the indication, and the third node focuses on sample size determination with no mention of the indication at all. These irrelevant nodes are ranked higher than the fourth node, which confirms the indication by stating the primary objective is 'to explorate the safety and efficacy of TJ301 in patients with active ulcerative colitis'. This suboptimal ranking of irrelevant nodes before a relevant one prevents the score from reaching a perfect 1.0.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Faithfulness Verbose Logs
+**************************************************
+
+Truths (limit=None):
+[
+    "The study protocol number is CTJ301UC201.",
+    "TJ301 is also referred to as FE 999301 and Olamkicept.",
+    "TJ301 is administered intravenously.",
+    "The study is a Phase II clinical trial.",
+    "The study is randomized, double-blind, and placebo-controlled.",
+    "The study evaluates the safety and efficacy of TJ301 in patients with active ulcerative colitis.",
+    "The study is multicenter and international, conducted across Mainland China, Taiwan, Republic of Korea, and Australia.",
+    "Prof. Dr. Minhu Chen is the Coordinating Investigator of the study.",
+    "Prof. Dr. Minhu Chen is the Chair of the Department of Gastroenterology and Hepatology at The First Affiliated Hospital, Sun Yat-sen University.",
+    "The First Affiliated Hospital, Sun Yat-sen University is located at 58 Zhongshan Road, Guangzhou, China.",
+    "Prof. Dr. Stefan Schreiber is a member of the expert committee.",
+    "Prof. Dr. Stefan Schreiber is affiliated with the University Hospital Schleswig-Holstein in Kiel, Germany.",
+    "The sponsor of the study is Leading Biopharm Limited.",
+    "The sponsor contact is Yin Liu, located at Suite 802, OmniVision Park West Tower, 88 Shangke Road, Pudong, Shanghai 201210, China.",
+    "Pregnant or breastfeeding women are excluded from the study.",
+    "Patients with contraindications to colonoscopy or sigmoidoscopy are excluded from the study.",
+    "Patients with allergies to any component of TJ301 are excluded from the study.",
+    "Patients with a history of colostomy, colectomy, or partial colectomy are excluded from the study.",
+    "Patients with a current diagnosis of Crohn's disease are excluded from the study.",
+    "Patients with ulcerative colitis limited to the rectum (ulcerative proctitis) are excluded from the study.",
+    "Patients with a history of malignancy, other than successfully treated non-metastatic cutaneous squamous cell or basal cell carcinoma and/or localized carcinoma in situ of the cervix, are excluded from the study.",
+    "If the Screening colonoscopy shows evidence of dysplasia or malignancy, the patient is not eligible for the study.",
+    "The study is described as a proof-of-concept trial.",
+    "The study is not aimed at confirming evidence of primary efficacy but at exploring preliminary indications of efficacy and safety.",
+    "Eligible patients must be male or female, aged 18-70 years inclusive.",
+    "Active UC must be confirmed by colonoscopy with biopsy or flexible sigmoidoscopy with biopsy at Screening.",
+    "Active UC must extend more than 15 cm past the anal verge from endoscopy for inclusion.",
+    "Eligible patients must have a full Mayo score of 5 or greater and a rectal bleeding subscore of 1 or greater at screening.",
+    "During Day -35 to Day -6 prior to Randomisation, eligible patients must have an endoscopy subscore of 2 or greater.",
+    "The primary objective of the study is to explore the safety and efficacy of TJ301 in patients with active ulcerative colitis."
+] 
+ 
+Claims:
+[
+    "The indication for the protocol is active ulcerative colitis.",
+    "TJ301 (FE 999301) is administered intravenously.",
+    "The study evaluating TJ301 (FE 999301) is a Phase II study.",
+    "The study evaluating TJ301 (FE 999301) is randomized, double-blind, and placebo-controlled.",
+    "The study is designed to evaluate the safety and efficacy of TJ301 (FE 999301) in patients with active ulcerative colitis."
+] 
+ 
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because the actual output is perfectly faithful to the retrieval context with no contradictions found!
+
+======================================================================
+
+[32mPASSED[0m
+evals/test_uc_protocol.py::test_factual_and_version_questions[04_Factual] 
+[1m-------------------------------- live log call ---------------------------------[0m
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /embeddings in 0.410213 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:48 [TIMING] Embedding generated in 675.63ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:104 [TIMING] Vector search: 5567.74ms, found 45 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:158 [TIMING] BM25 search: 408.23ms, found 9 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:219 [HYBRID] RRF fusion: 45 vector + 9 BM25 -> 54 merged
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:337 [HYBRID] Search complete: 54 results in 5981.91ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:281 [BM25_SCORE_OBSERVE] normalized scores for BM25-only chunks: [1.0, 1.0, 0.9669, 0.9669, 0.7048, 0.5253, 0.3012, 0.0219, 0.0]
+[31m[1mERROR   [0m rag_service.services.reranker:reranker.py:121 [RERANK_ERROR] Falling back to pre-rerank order: Event loop is closed
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:410 [TIMING] Retrieval total: 5986.13ms, 6 chunks after filter+rerank
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:305 [COMPRESSION] 6 chunks -> 5 compressed
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /chat/completions in 0.482428 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:446 {"event": "llm_usage", "call_type": "query_generation", "model": "gpt-5.6-terra", "input_tokens": 2385, "output_tokens": 151, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "document_id": "ae08b6b1-fdc6-4304-8592-d02473a84ecc", "organization_id": "ee5b5b9f-1848-4b78-8d55-5662f02ad471"}
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:609 [TIMING] LLM call: 2839.73ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:698 [TIMING] Generation complete: 9503.23ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:427 {"event": "rag_query_trace", "query": "What phase is this trial?", "retrieval_query": null, "system_prompt_version": "440b2406", "retrieved_chunks": [{"title": "Protocol Ulcerative Colitis", "page": 26, "section": "3.1.1 Trial Design Diagrams", "score": null, "scores": [0.01639344262295082, 0.015873015873015872], "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 6, "section": "TITLE OF TRIAL", "score": 0.01639344262295082, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 43, "section": "6.1 Trial Flowchart", "score": 0.016129032258064516, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 82, "section": "17 REFERENCES", "score": 0.016129032258064516, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 1, "section": "GCP Statement:", "score": 0.015873015873015872, "scores": null, "had_context": true}], "context_char_count": 4975, "response": "Source: Protocol Ulcerative Colitis\n\nThis is a Phase II trial.\n[TITLE OF TRIAL \u00b7 p.6]", "sources": [{"name": "Protocol Ulcerative Colitis", "page": 6, "section": "TITLE OF TRIAL", "exactText": "A Phase II, Randomized, Double-blind, Placebo-controlled Study to Evaluate the Safety and Efficacy of TJ301 (FE 999301) Administered Intravenously in Patients with Active Ulcerative Colitis", "bboxes": [[72.0, 676.4639829101562, 528.3599999999998, 635.8149752178485]], "relevance": "high"}], "timing": {"response_cache_hit": false, "semantic_cache_hit": false, "chunks_compressed": true, "condense_ms": 0.001375097781419754, "query_condensed": false, "embedding_ms": 675.626500044018, "embedding_cache_hit": false, "retrieval": {"chunk_cache_hit": false, "confidence_filter_applied": true, "confidence_filter_threshold": 0.04, "confidence_filter_bm25_threshold": null, "confidence_filter_input_count": 54, "confidence_filter_kept_count": 54, "confidence_filter_dropped_count": 0, "confidence_filter_kept_scores": [0.6032, 0.5943, 0.5818, 0.5681, 0.5623, 0.5595, 0.5579, 0.5567, 0.5548, 0.5507, 0.5454, 0.5437, 0.5424, 0.5379, 0.5355, 0.5348, 0.5341, 0.5332, 0.5314, 0.5274, 0.527, 0.5258, 0.5253, 0.525, 0.5245, 0.5245, 0.5196, 0.5191, 0.5175, 0.5173, 0.5173, 0.5172, 0.5157, 0.5122, 0.5116, 0.5092, 0.5083, 0.5078, 0.5072, 0.5068, 0.5066, 0.5063, 0.5062, 0.5045, 0.5044], "confidence_filter_dropped_scores": [], "confidence_filter_bm25_only_scores_normalized": [1.0, 1.0, 0.9669, 0.9669, 0.7048, 0.5253, 0.3012, 0.0219, 0.0], "hybrid_search": true, "cache_hit": true, "embedding_ms": 0.0, "db_search_ms": 5567.743707913905, "hybrid_parallel_ms": 5981.913167051971, "vector_count": 45, "bm25_count": 9, "fused_count": 54, "reranker_enabled": true, "reranker_provider": "cohere", "reranker_error": "Event loop is closed", "reranker_ms": 2.7057919651269913, "retrieval_total_ms": 5986.127167008817}, "original_chunk_count": 6, "compression_ms": 0.1760842278599739, "compressed_chunk_count": 5, "llm_call_ms": 2839.7318748757243, "provider": "openai", "model": "gpt-5.6-terra", "generation_total_ms": 9503.233542200178}}
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+Determine if 'actual_output' is factually correct and complete relative to 'expected_output'. For questions about stratification factors, safety committee names, or country lists, the answer MUST reflect the CURRENT protocol version (v1.1), not a superseded value, unless it explicitly labels the older value as historical/superseded. 
+ 
+Evaluation Steps:
+[
+    "Compare the 'actual_output' against the 'expected_output' to determine if the core facts, values, or lists provided are identical or semantically equivalent.",
+    "Check whether the 'actual_output' reflects the CURRENT protocol version (v1.1) values for any stratification factors, safety committee names, or country lists mentioned in the 'input', ensuring it does not present a superseded value as current.",
+    "If the 'actual_output' references an older or superseded value, verify that it explicitly labels it as historical or superseded; if it presents the outdated value as current without such labeling, mark the output as incorrect.",
+    "Assess the completeness of the 'actual_output' relative to the 'expected_output' by confirming that no required items (e.g., missing countries, factors, or committee names from v1.1) are omitted and no extra incorrect items are added."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 1.0
+ 
+Reason: The actual output correctly identifies the trial as Phase II, which is semantically equivalent to the expected output of 'Phase 2'. The core fact is identical. The response includes additional source citation information, but this does not detract from the accuracy of the answer. No superseded values or missing items are present.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Contextual Precision Verbose Logs
+**************************************************
+
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": "The context explicitly states 'This is a multicenter, stratified randomized, double-blind, placebo-controlled phase II study,' which directly confirms the trial phase."
+    },
+    {
+        "verdict": "yes",
+        "reason": "The title explicitly states 'A Phase II, Randomized, Double-blind, Placebo-controlled Study,' which directly answers the question about the trial phase."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context describes the trial flowchart and periods but does not mention the phase of the trial."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context contains references to other studies, including a 'phase 2 trial' for etrolizumab, but this is not relevant to identifying the phase of the current trial being asked about."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context only contains a GCP compliance statement and confidentiality notice, with no information about the trial phase."
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because the two relevant nodes are ranked first and second, perfectly preceding all irrelevant nodes. The first node explicitly states 'This is a multicenter, stratified randomized, double-blind, placebo-controlled phase II study,' and the second node confirms 'A Phase II, Randomized, Double-blind, Placebo-controlled Study,' both directly answering the question. The remaining nodes ranked third, fourth, and fifth are irrelevant — describing a trial flowchart, references to other studies, and a GCP compliance statement respectively — none of which identify the trial phase.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Faithfulness Verbose Logs
+**************************************************
+
+Truths (limit=None):
+[
+    "The study is a multicenter, stratified randomized, double-blind, placebo-controlled phase II study.",
+    "The trial includes a Run-in Period, a 4-week Screening Period, a 12-week double-blind Treatment Period, and a Safety Follow-up Period of 3 weeks to Day 105.",
+    "90 patients will be centrally, dynamically, randomly assigned to 3 groups in a 1:1:1 ratio.",
+    "The three groups receive 600mg TJ301 biweekly (Q2W), 300mg TJ301 Q2W, or placebo Q2W.",
+    "Randomisation will be stratified by prior corticosteroids treatment (yes/no) and consent to participate in PK substudy (yes/no).",
+    "TJ301 or placebo administrations will occur on Days 0, 14, 28, 42, 56, and 70.",
+    "During the double-blind period and the follow-up period, patients should be on stable conventional treatment for UC.",
+    "There will be 9 to 10 main visits at the investigational site during the study.",
+    "The trial is evaluating the safety and efficacy of TJ301 (FE 999301) administered intravenously in patients with active ulcerative colitis.",
+    "The trial will be performed in compliance with GCP.",
+    "The study is proprietary to Leading Biopharm Limited.",
+    "Information in the document shall not be disclosed to any third party without prior written consent of an authorised officer of Leading Biopharm Limited.",
+    "Etrolizumab was studied as induction therapy for ulcerative colitis in a randomised, controlled, phase 2 trial published in Lancet on July 26, 2014.",
+    "Patients with ulcerative colitis and Crohn's disease show enhanced secretion of tumour necrosis factor-alpha, IL-6, and IL-1 beta by isolated lamina propria mononuclear cells.",
+    "Blockade of interleukin 6 trans signalling suppresses T-cell resistance against apoptosis in chronic intestinal inflammation."
+] 
+ 
+Claims:
+[
+    "The Protocol Ulcerative Colitis is a Phase II trial.",
+    "The title of the trial is found on page 6 of the protocol."
+] 
+ 
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide any information about the page number where the title of the trial is found in the protocol document."
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because the actual output is perfectly faithful to the retrieval context with no contradictions found!
+
+======================================================================
+
+[32mPASSED[0m
+evals/test_uc_protocol.py::test_factual_and_version_questions[05_Factual] 
+[1m-------------------------------- live log call ---------------------------------[0m
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /embeddings in 0.384006 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:48 [TIMING] Embedding generated in 606.20ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:104 [TIMING] Vector search: 5490.96ms, found 45 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:158 [TIMING] BM25 search: 404.02ms, found 0 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:219 [HYBRID] RRF fusion: 45 vector + 0 BM25 -> 45 merged
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:337 [HYBRID] Search complete: 45 results in 5901.59ms
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.cohere.com/v1/rerank "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.reranker:reranker.py:114 [RERANK] 45 -> 6 chunks in 1066.21ms using rerank-english-v3.0
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:410 [TIMING] Retrieval total: 6969.02ms, 6 chunks after filter+rerank
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:305 [COMPRESSION] 6 chunks -> 6 compressed
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /chat/completions in 0.452326 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:446 {"event": "llm_usage", "call_type": "query_generation", "model": "gpt-5.6-terra", "input_tokens": 2435, "output_tokens": 480, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "document_id": "ae08b6b1-fdc6-4304-8592-d02473a84ecc", "organization_id": "ee5b5b9f-1848-4b78-8d55-5662f02ad471"}
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:609 [TIMING] LLM call: 5735.72ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:698 [TIMING] Generation complete: 13313.02ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:427 {"event": "rag_query_trace", "query": "How many patients will be randomised and in what ratio?", "retrieval_query": null, "system_prompt_version": "440b2406", "retrieved_chunks": [{"title": "Protocol Ulcerative Colitis", "page": 9, "section": "NUMBER OF PATIENTS", "score": 0.9797453, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 37, "section": "4.2.2 Randomisation", "score": 0.97414124, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 29, "section": "3.2 Planned Number of Patients", "score": 0.9574373, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 66, "section": "9.2 Patient Disposition", "score": 0.80084777, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 36, "section": "4.2.2 Randomisation", "score": 0.7409249, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 92, "section": "Appendix 4 - Summary of Changes for Version 1.1", "score": 0.44215468, "scores": null, "had_context": true}], "context_char_count": 5118, "response": "Source: Protocol Ulcerative Colitis\n\nA total of 90 patients with active ulcerative colitis will be randomised equally among three treatment arms\u2014placebo, TJ301 300 mg, and TJ301 600 mg\u2014in a 1:1:1 ratio.\n[Section 4.2.2 Randomisation \u00b7 p.36]\n\nFor the Mainland China PK subgroup, 24 patients (8 per arm) will also be randomised in a 1:1:1 ratio.\n[Section 4.2.2 Randomisation \u00b7 p.37]", "sources": [{"name": "Protocol Ulcerative Colitis", "page": 36, "section": "4.2.2 Randomisation", "exactText": "At the Randomisation Visit (Visit 2), patients will be centrally, dynamically randomised in a 1:1:1 fashion to each of the three arms, namely placebo, TJ301 300 mg, or TJ301 600 mg, by validated Interactive Web Response System (IWRS).", "bboxes": [[72.0, 233.90398291015606, 538.44, 178.01497521784836]], "relevance": "high"}, {"name": "Protocol Ulcerative Colitis", "page": 29, "section": "3.2 Planned Number of Patients", "exactText": "In total, 90 patients with active UC at approximately 25-30 investigational sites globally will be enrolled competitively and randomised equally into three arms with TJ301 (two dose levels) or placebo.", "bboxes": [[72.0, 653.5439829101564, 534.48, 612.8949752178487]], "relevance": "high"}, {"name": "Protocol Ulcerative Colitis", "page": 37, "section": "4.2.2 Randomisation", "exactText": "Patients in PK subgroup (N=24, 8 for each arm) will be centrally, dynamically randomised in a 1:1:1 fashion to each of the three arms, namely placebo, TJ301 300 mg, or TJ301 600 mg.", "bboxes": [[71.99999999999994, 696.1439829101562, 538.0799999999999, 655.4949752178485]], "relevance": "high"}], "timing": {"response_cache_hit": false, "semantic_cache_hit": false, "chunks_compressed": false, "condense_ms": 0.0012079253792762756, "query_condensed": false, "embedding_ms": 606.2042922712862, "embedding_cache_hit": false, "retrieval": {"chunk_cache_hit": false, "confidence_filter_applied": true, "confidence_filter_threshold": 0.04, "confidence_filter_bm25_threshold": null, "confidence_filter_input_count": 45, "confidence_filter_kept_count": 45, "confidence_filter_dropped_count": 0, "confidence_filter_kept_scores": [0.5998, 0.5933, 0.5788, 0.5593, 0.5576, 0.5298, 0.4927, 0.4873, 0.4814, 0.4804, 0.4762, 0.4749, 0.4739, 0.4723, 0.4685, 0.4678, 0.4672, 0.4664, 0.4642, 0.4629, 0.4585, 0.4555, 0.4511, 0.4495, 0.4444, 0.4434, 0.4406, 0.4396, 0.4389, 0.4389, 0.4384, 0.4352, 0.4341, 0.4331, 0.4311, 0.4252, 0.4238, 0.4228, 0.4222, 0.4204, 0.4176, 0.4171, 0.4145, 0.4132, 0.4128], "confidence_filter_dropped_scores": [], "confidence_filter_bm25_only_scores_normalized": [], "hybrid_search": true, "cache_hit": true, "embedding_ms": 0.0, "db_search_ms": 5490.960875060409, "hybrid_parallel_ms": 5901.585707906634, "vector_count": 45, "bm25_count": 0, "fused_count": 45, "reranker_enabled": true, "reranker_provider": "cohere", "reranker_ms": 1066.2051253020763, "reranker_input_count": 45, "reranker_output_count": 6, "reranker_model": "rerank-english-v3.0", "retrieval_total_ms": 6969.016916118562}, "original_chunk_count": 6, "compression_ms": 0.17808331176638603, "compressed_chunk_count": 6, "llm_call_ms": 5735.720875207335, "provider": "openai", "model": "gpt-5.6-terra", "generation_total_ms": 13313.016165979207}}
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Faithfulness Verbose Logs
+**************************************************
+
+Truths (limit=None):
+[
+    "A total of 90 patients with active UC will be enrolled in the study.",
+    "The 90 patients will be randomised equally into three arms.",
+    "The three arms consist of TJ301 at two dose levels and a placebo.",
+    "The two dose levels of TJ301 are 300 mg and 600 mg.",
+    "Patients will be randomised in a 1:1:1 fashion to each of the three arms.",
+    "The three arms are: placebo, TJ301 300 mg, and TJ301 600 mg.",
+    "Randomisation will be conducted using a validated Interactive Web Response System (IWRS).",
+    "Randomisation will be stratified by prior corticosteroids treatment (yes/no) and consent to participate in PK substudy (yes/no).",
+    "Only some patients in Mainland China will enter the PK subgroup.",
+    "The PK subgroup consists of 24 patients, with 8 patients for each arm.",
+    "The study will take place at approximately 25-30 investigational sites globally.",
+    "Patients must meet all inclusion criteria and none of the exclusion criteria to be randomised.",
+    "All post-randomisation discontinuations will be summarised by reason for discontinuation.",
+    "TJ301 is administered biweekly (Q2W).",
+    "Stratification information will be collected at Visit 1 and used at Visit 2 for randomisation.",
+    "The Randomisation Visit is referred to as Visit 2."
+] 
+ 
+Claims:
+[
+    "A total of 90 patients with active ulcerative colitis will be randomised equally among three treatment arms: placebo, TJ301 300 mg, and TJ301 600 mg, in a 1:1:1 ratio.",
+    "The three treatment arms in the ulcerative colitis protocol are placebo, TJ301 300 mg, and TJ301 600 mg.",
+    "For the Mainland China PK subgroup, 24 patients will be randomised in a 1:1:1 ratio, with 8 patients per arm."
+] 
+ 
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because the actual output is perfectly faithful to the retrieval context with no contradictions found!
+
+======================================================================
+**************************************************
+Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+Determine if 'actual_output' is factually correct and complete relative to 'expected_output'. For questions about stratification factors, safety committee names, or country lists, the answer MUST reflect the CURRENT protocol version (v1.1), not a superseded value, unless it explicitly labels the older value as historical/superseded. 
+ 
+Evaluation Steps:
+[
+    "Compare the 'actual_output' against the 'expected_output' to determine if the core facts, values, or lists provided are identical or semantically equivalent.",
+    "Check whether the 'actual_output' reflects the CURRENT protocol version (v1.1) values for any stratification factors, safety committee names, or country lists mentioned in the 'input', rather than superseded or outdated values from prior versions.",
+    "If the 'actual_output' references an older or superseded value, verify whether it explicitly labels it as historical or superseded; if it does not, treat the response as factually incorrect regardless of partial matches with 'expected_output'.",
+    "Assess completeness by confirming that all required elements present in the 'expected_output' are also present in the 'actual_output', and that no critical information from the current protocol version (v1.1) is omitted or replaced with incorrect data."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 0.8
+ 
+Reason: The actual output correctly identifies the total number of patients (90) and the randomisation ratio (1:1:1) across the three treatment arms (placebo, TJ301 300 mg, and TJ301 600 mg), which aligns with the expected output. The core facts are semantically equivalent. The actual output adds additional detail about the Mainland China PK subgroup (24 patients, 8 per arm), which is supplementary information not contradicting the expected output. The only minor discrepancy is that the actual output does not explicitly mention the 'Q2W' dosing frequency that appears in the expected output, but this omission does not constitute a factual error regarding the randomisation question asked. Overall, the response is complete and accurate with respect to the primary question.
+
+======================================================================
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Contextual Precision Verbose Logs
+**************************************************
+
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": "This context directly states '90 patients with active UC will be enrolled competitively, and randomised equally into three arms with TJ301 (two dose levels) or placebo,' confirming the number of patients and equal (1:1:1) randomisation."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context mentions the 1:1:1 randomisation ratio and the three arms but is specific to the PK subgroup (N=24), not the overall 90 patients randomisation, making it only partially relevant."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context confirms '90 patients with active UC at approximately 25-30 investigational sites globally will be enrolled competitively and randomised equally into three arms with TJ301 (two dose levels) or placebo,' directly supporting the expected output."
+    },
+    {
+        "verdict": "no",
+        "reason": "This context only discusses how patients screened and randomised will be accounted for and does not provide information about the number of patients or the randomisation ratio."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context explicitly states patients 'will be centrally, dynamically randomised in a 1:1:1 fashion to each of the three arms, namely placebo, TJ301 300 mg, or TJ301 600 mg,' directly supporting the expected output regarding the ratio and treatment arms."
+    },
+    {
+        "verdict": "yes",
+        "reason": "This context explicitly states '90 patients will be centrally, dynamically, randomly assigned to 3 groups (1:1:1) to receive 600mg TJ301 biweekly (Q2W), 300mg TJ301 Q2W or placebo Q2W,' directly matching the expected output."
+    }
+]
+ 
+Score: 0.9266666666666665
+Reason: The score is 0.93 because the retrieval contexts are mostly well-ranked, with relevant nodes appearing at positions 1, 2, 3, 5, and 6, providing strong coverage of the 90 patients and 1:1:1 randomisation ratio. However, the fourth node is an irrelevant node that only discusses 'how patients screened and randomised will be accounted for' without providing information about the number of patients or randomisation ratio, and it is ranked between relevant nodes (positions 3 and 5), slightly disrupting the ideal ordering of relevant content above irrelevant content.
+
+======================================================================
+
+[32mPASSED[0m
+evals/test_uc_protocol.py::test_factual_and_version_questions[06_Factual] 
+[1m-------------------------------- live log call ---------------------------------[0m
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /embeddings in 0.395174 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:48 [TIMING] Embedding generated in 666.99ms
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:104 [TIMING] Vector search: 6457.33ms, found 45 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:158 [TIMING] BM25 search: 410.41ms, found 0 chunks
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:219 [HYBRID] RRF fusion: 45 vector + 0 BM25 -> 45 merged
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:337 [HYBRID] Search complete: 45 results in 6871.63ms
+[31m[1mERROR   [0m rag_service.services.reranker:reranker.py:121 [RERANK_ERROR] Falling back to pre-rerank order: Event loop is closed
+[32mINFO    [0m rag_service.services.retrieval_service:retrieval_service.py:410 [TIMING] Retrieval total: 6875.90ms, 6 chunks after filter+rerank
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:305 [COMPRESSION] 6 chunks -> 4 compressed
+[32mINFO    [0m openai._base_client:_base_client.py:1786 Retrying request to /chat/completions in 0.471781 seconds
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:446 {"event": "llm_usage", "call_type": "query_generation", "model": "gpt-5.6-terra", "input_tokens": 2924, "output_tokens": 307, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "document_id": "ae08b6b1-fdc6-4304-8592-d02473a84ecc", "organization_id": "ee5b5b9f-1848-4b78-8d55-5662f02ad471"}
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:609 [TIMING] LLM call: 5428.73ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:698 [TIMING] Generation complete: 12973.62ms
+[32mINFO    [0m rag_service.services.generation_service:generation_service.py:427 {"event": "rag_query_trace", "query": "What is the dosing schedule of the study drug?", "retrieval_query": null, "system_prompt_version": "440b2406", "retrieved_chunks": [{"title": "Protocol Ulcerative Colitis", "page": 45, "section": "Table 1 Time and Events Schedule", "score": 0.01639344262295082, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 9, "section": "Study Flowchart", "score": 0.016129032258064516, "scores": null, "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 51, "section": "6.2.5 PK Visits", "score": null, "scores": [0.015873015873015872, 0.015384615384615385, 0.015151515151515152], "had_context": true}, {"title": "Protocol Ulcerative Colitis", "page": 27, "section": "3.1.2 Overall Design", "score": 0.015625, "scores": null, "had_context": true}], "context_char_count": 6246, "response": "Source: Protocol Ulcerative Colitis\n\nI don't have this information regarding the study drug dosing schedule. The available context identifies six administrations and specifies PK sampling relative to the 1st through 6th doses, but does not state the dose amount, route, or planned timing of each administration.\n[Section 6.2.5 PK Visits \u00b7 p.51]", "sources": [{"name": "Protocol Ulcerative Colitis", "page": 51, "section": "6.2.5 PK Visits", "exactText": "Blood samples for PK subgroup will be collected in as follows: - At 1st dose... - At the 2nd, 3rd, 4th, and 5th administrations... - At 6th dose...", "bboxes": [[71.99999999999997, 667.5839829101564, 553.8, 626.9349752178487], [89.88, 464.3999829101563, 396.6, 453.65497521784863], [71.99999999999989, 179.18398291015637, 558.84, 138.5349752178488]], "relevance": "medium"}], "timing": {"response_cache_hit": false, "semantic_cache_hit": false, "chunks_compressed": true, "condense_ms": 0.0022919848561286926, "query_condensed": false, "embedding_ms": 666.9908748008311, "embedding_cache_hit": false, "retrieval": {"chunk_cache_hit": false, "confidence_filter_applied": true, "confidence_filter_threshold": 0.04, "confidence_filter_bm25_threshold": null, "confidence_filter_input_count": 45, "confidence_filter_kept_count": 45, "confidence_filter_dropped_count": 0, "confidence_filter_kept_scores": [0.5972, 0.5521, 0.544, 0.5427, 0.5406, 0.5356, 0.5277, 0.5215, 0.521, 0.5192, 0.5184, 0.5184, 0.5124, 0.5123, 0.5084, 0.5064, 0.503, 0.4999, 0.4986, 0.4984, 0.4981, 0.4963, 0.496, 0.4954, 0.4931, 0.4925, 0.4888, 0.4879, 0.4875, 0.4861, 0.4861, 0.4859, 0.484, 0.4825, 0.4824, 0.4797, 0.4771, 0.4768, 0.4768, 0.4729, 0.4726, 0.4714, 0.4709, 0.4702, 0.4699], "confidence_filter_dropped_scores": [], "confidence_filter_bm25_only_scores_normalized": [], "hybrid_search": true, "cache_hit": true, "embedding_ms": 0.0, "db_search_ms": 6457.325291354209, "hybrid_parallel_ms": 6871.625790838152, "vector_count": 45, "bm25_count": 0, "fused_count": 45, "reranker_enabled": true, "reranker_provider": "cohere", "reranker_error": "Event loop is closed", "reranker_ms": 3.0317087657749653, "retrieval_total_ms": 6875.90316683054}, "original_chunk_count": 6, "compression_ms": 0.5167080089449883, "compressed_chunk_count": 4, "llm_call_ms": 5428.727374877781, "provider": "openai", "model": "gpt-5.6-terra", "generation_total_ms": 12973.619041964412}}
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+**************************************************
+Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+Determine if 'actual_output' is factually correct and complete relative to 'expected_output'. For questions about stratification factors, safety committee names, or country lists, the answer MUST reflect the CURRENT protocol version (v1.1), not a superseded value, unless it explicitly labels the older value as historical/superseded. 
+ 
+Evaluation Steps:
+[
+    "Compare the 'actual_output' against the 'expected_output' to determine if the core facts, values, or lists provided are identical or semantically equivalent.",
+    "Check whether the 'actual_output' references the current protocol version (v1.1) for any protocol-specific details such as stratification factors, safety committee names, or country lists. If the 'actual_output' uses a superseded value from an older version without explicitly labeling it as historical or superseded, mark it as incorrect.",
+    "Verify completeness by ensuring the 'actual_output' includes all required elements present in the 'expected_output' (e.g., all countries in a list, all stratification factors), with no critical omissions or additions that contradict the expected answer.",
+    "Assign a final correctness judgment: the 'actual_output' is correct only if it matches the 'expected_output' in factual content, reflects the v1.1 protocol values where applicable, and does not present outdated information as current."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 0.0
+ 
+Reason: The actual output fails to provide the dosing schedule information that is clearly stated in the expected output (600 mg or 300 mg TJ301 or placebo every 2 weeks, administered on Days 0, 14, 28, 42, 56, and 70). Instead, the response claims the information is unavailable, which directly contradicts the expected output. The actual output only references PK sampling visits without extracting the core dosing schedule details. This represents a complete factual mismatch with the expected answer.
+
+======================================================================
