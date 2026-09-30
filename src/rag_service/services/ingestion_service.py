@@ -11,6 +11,7 @@ import tempfile
 from datetime import datetime
 from typing import AsyncIterator, List, Optional
 from uuid import UUID, uuid4
+from rag_service.clients.anthropic_client import get_anthropic_client, get_openai_llm_client
 
 
 import httpx
@@ -127,25 +128,22 @@ class RagIngestionService:
             return {"page_number": None, "headings": []}
 
     def _log_llm_usage(
-        self,
-        call_type: str,
-        response,
-        *,
-        document_id: Optional[UUID] = None,
-        organization_id: Optional[UUID] = None,
-        model: Optional[str] = None,
-    ) -> None:
-        """Structured log line per LLM call, for cost tracking."""
-
+        self, call_type, response, *, document_id=None, organization_id=None, model=None
+    ):
         usage = getattr(response, "usage", None)
+        input_tokens = getattr(usage, "input_tokens", None)
+        output_tokens = getattr(usage, "output_tokens", None)
+        if input_tokens is None and usage is not None:
+            input_tokens = getattr(usage, "prompt_tokens", None)
+            output_tokens = getattr(usage, "completion_tokens", None)
         logger.info(
             json.dumps(
                 {
                     "event": "llm_usage",
                     "call_type": call_type,
                     "model": model or getattr(response, "model", None),
-                    "input_tokens": getattr(usage, "input_tokens", None),
-                    "output_tokens": getattr(usage, "output_tokens", None),
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
                     "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
                     "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
                     "document_id": str(document_id) if document_id else None,
@@ -182,41 +180,84 @@ class RagIngestionService:
         if not settings.contextual_retrieval_enabled:
             return [None] * len(docs)
 
-        client = get_anthropic_client()
+        client = get_anthropic_client() if settings.contextual_provider == "anthropic" else None
+        openai_client = (
+            get_openai_llm_client() if settings.contextual_provider == "openai" else None
+        )
         window = settings.contextual_context_window
         use_full_document = len(docs) <= max(window * 5, 20)
 
         summaries: List[Optional[str]] = [None] * len(docs)
-        cache_hit_count = [0]  # mutable counter, closure-friendly
-        semaphore = asyncio.Semaphore(5)  # bound concurrency against API rate limits
+        cache_hit_count = [0]
+        semaphore = asyncio.Semaphore(5)
 
         async def _summarize_one(
             i: int, chunk_text: str, context_text: str, cacheable: bool
         ) -> None:
             async with semaphore:
                 try:
-                    system_blocks = [{"type": "text", "text": self.CONTEXTUAL_SYSTEM_PROMPT}]
-                    doc_block = {"type": "text", "text": f"<document>\n{context_text}\n</document>"}
-                    if cacheable:
-                        doc_block["cache_control"] = {"type": "ephemeral"}
-                    system_blocks.append(doc_block)
+                    provider = settings.contextual_provider
 
-                    response = await client.messages.create(
-                        model=settings.llm_model,
-                        max_tokens=150,
-                        system=system_blocks,
-                        messages=[{"role": "user", "content": f"<chunk>\n{chunk_text}\n</chunk>"}],
-                    )
-                    self._log_llm_usage(
-                        "ingestion_context",
-                        response,
-                        document_id=document_id,
-                        organization_id=organization_id,
-                    )
-                    usage = getattr(response, "usage", None)
-                    if getattr(usage, "cache_read_input_tokens", 0):
-                        cache_hit_count[0] += 1
-                    summaries[i] = response.content[0].text.strip()
+                    if provider == "openai":
+                        model = settings.llm_model_openai_fast  # Luna
+                        response = await openai_client.chat.completions.create(
+                            model=model,
+                            reasoning_effort="none",
+                            max_completion_tokens=200,
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": (
+                                        f"{self.CONTEXTUAL_SYSTEM_PROMPT}\n\n"
+                                        f"<document>\n{context_text}\n</document>"
+                                    ),
+                                },
+                                {"role": "user", "content": f"<chunk>\n{chunk_text}\n</chunk>"},
+                            ],
+                        )
+                        self._log_llm_usage(
+                            "ingestion_context",
+                            response,
+                            document_id=document_id,
+                            organization_id=organization_id,
+                            model=model,
+                        )
+                        text = (response.choices[0].message.content or "").strip()
+                        if response.choices[0].finish_reason == "length":
+                            logger.warning(
+                                f"[CONTEXTUAL_RETRIEVAL] chunk {i} truncated at max_completion_tokens"
+                            )
+                        summaries[i] = text
+                    else:
+                        model = settings.llm_model
+                        system_blocks = [{"type": "text", "text": self.CONTEXTUAL_SYSTEM_PROMPT}]
+                        doc_block = {
+                            "type": "text",
+                            "text": f"<document>\n{context_text}\n</document>",
+                        }
+                        if cacheable:
+                            doc_block["cache_control"] = {"type": "ephemeral"}
+                        system_blocks.append(doc_block)
+
+                        response = await client.messages.create(
+                            model=model,
+                            max_tokens=150,
+                            system=system_blocks,
+                            messages=[
+                                {"role": "user", "content": f"<chunk>\n{chunk_text}\n</chunk>"}
+                            ],
+                        )
+                        self._log_llm_usage(
+                            "ingestion_context",
+                            response,
+                            document_id=document_id,
+                            organization_id=organization_id,
+                            model=model,
+                        )
+                        usage = getattr(response, "usage", None)
+                        if getattr(usage, "cache_read_input_tokens", 0):
+                            cache_hit_count[0] += 1
+                        summaries[i] = response.content[0].text.strip()
                 except Exception as e:
                     logger.warning(f"[CONTEXTUAL_RETRIEVAL] chunk {i} failed: {e}")
 

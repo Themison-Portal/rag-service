@@ -181,7 +181,9 @@ def create_app() -> FastAPI:
 
         try:
             async with get_session(organization_id=body.organization_id) as session:
-                semantic_cache = SemanticCacheService(session)
+                semantic_cache = (
+                    None if settings.disable_semantic_cache else SemanticCacheService(session)
+                )
                 retrieval_service = RagRetrievalService(db=session)
                 generation_service = RagGenerationService(
                     retrieval_service=retrieval_service,
