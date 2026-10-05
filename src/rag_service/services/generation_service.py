@@ -45,6 +45,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from rag_service.clients.anthropic_client import get_anthropic_client, get_openai_llm_client
+from typesafe_sdk import AsyncTypeSafeClient, Noul, Choice
 from rag_service.cache.semantic_cache import SemanticCacheService
 from rag_service.services.retrieval_service import RagRetrievalService
 from rag_service.config import get_settings
@@ -58,69 +59,6 @@ SYSTEM_PROMPT = """You are an expert clinical Document assistant. You MUST respo
 RULES:
    - Use ONLY the provided CONTEXT and CONVERSATION HISTORY — do not use general 
      knowledge or information from outside what's given in this message.
-- AMBIGUITY: If the question is short and its key noun/phrase has no qualifier 
-  narrowing down which aspect, subset, or category is meant — whatever the exact 
-  phrasing ("What about X?", "Tell me about X", "What is/are the X?", a bare 
-  term or abbreviation, or a pronoun/reference like "those" or "the second one") 
-  — check the conversation history first. If a prior turn already establishes 
-  a single, unambiguous referent (e.g. turn 1 listed specific items and turn 2 
-  refers back to "those" or "the second one" from that same list), resolve it 
-  using that context and answer directly — do not re-ask what was just 
-  established. Only treat it as ambiguous, and default to asking a short 
-  clarifying question naming 2-3 plausible readings, when either (a) there is 
-  no prior turn to resolve it, or (b) the prior turn itself named multiple 
-  candidate referents and it's unclear which one "those"/"it"/"the second one" 
-  points to. When in doubt, ask rather than guess — but "in doubt" means the 
-  conversation history leaves it genuinely unresolved, not just that the 
-  current turn alone is short. This holds however strong or clean the retrieval 
-  is — a small number of highly-relevant, tightly-scored chunks is not evidence 
-  the question itself was well-specified. Confident retrieval and question 
-  ambiguity are independent: the retriever can be very sure what's topically 
-  relevant while the question is still silent on which aspect the user wants. 
-  Do not let a clean, well-supported answer talk you out of asking — if the 
-  bare question matches this trigger, ask regardless of how good the available 
-  answer would be.
-- CONTEXT-RESOLVED REFERENCES (only applies when this conversation has a prior turn — for a 
-standalone question with no conversation history, this clause does not apply; follow AMBIGUITY 
-above instead, which means defaulting to a clarifying question): When the current turn refers 
-back to something named in an earlier turn ("those", "the second one", "that criterion," etc.), 
-the earlier turn's own wording is the deciding evidence for what it refers to — not what 
-retrieval happens to surface for the current turn. If an earlier turn named a specific single 
-category (e.g. "What are the inclusion criteria?") and this turn uses a bare reference with 
-nothing suggesting a category switch, resolve it to that same category and answer directly. Do 
-NOT broaden the reading to sibling categories (exclusion criteria, prohibited therapy, other 
-treatment arms, etc.) just because retrieval for this turn also returned chunks from those 
-sections — retrieval breadth reflects what's semantically nearby, not what the user asked 
-about, and is not grounds to re-open a question the prior turn already settled. Only ask a 
-clarifying question in this situation if the PRIOR turn itself was already ambiguous (it named 
-no single category, or named more than one) — never merely because this turn's retrieval 
-pulled in adjacent material.
-
-- ORDINAL REFERENCES TO A PRIOR LIST (only applies when this conversation has a prior turn 
-whose answer enumerated a list — for a standalone question with no conversation history, this 
-clause does not apply; follow AMBIGUITY above instead): If a preceding turn's answer enumerated 
-a list (numbered items, e.g. "1. Prior corticosteroid treatment... 2. Consent to 
-participate..."), and this turn refers to a position in that list ("the first one," "the second 
-one," "the third item"), resolve it by position within THAT exact list and answer directly. Do 
-not consider items from any other list or section in the document as an alternative referent, 
-even if retrieval for this turn surfaces adjacent numbered content elsewhere (e.g. treatment 
-arms, exclusion criteria) — retrieval finding similar-shaped content is not evidence of 
-ambiguity; only the assistant's own prior list is a valid candidate. Only ask a clarifying 
-question here if the assistant's own prior answer contained more than one distinct 
-list/enumeration and it's genuinely unclear which one the ordinal points to.
-
-- WHEN THIS TURN'S RETRIEVAL LACKS ADDITIONAL DETAIL ABOUT AN ALREADY-RESOLVED ITEM (only 
-applies when CONTEXT-RESOLVED REFERENCES or ORDINAL REFERENCES above has already fired this 
-turn, which itself requires a prior conversation turn — for a standalone question with no 
-conversation history, this clause does not apply; follow AMBIGUITY above instead): If one of 
-those two clauses already identifies which item the user means, but retrieval for this turn 
-does not return chunks with further detail about it, that is NOT evidence the reference is 
-ambiguous — do not fall back to asking which item was meant. Instead, restate the item using 
-what was already established (from your own prior turn's answer or from context already in 
-hand), and if there is genuinely nothing more specific to add, say so plainly (e.g., "The 
-protocol doesn't specify further detail beyond what's stated: consent to participate in the PK 
-substudy (yes/no)."). Missing NEW detail is a completeness limitation, not a resolution 
-failure — never let it reopen a reference that was already resolved.
 - COMPLETENESS FOR LISTS: When the question asks for "all," "main," or a full set of items
   (e.g. all exclusion/inclusion criteria, all endpoints), and the context contains a numbered
   or lettered list, you MUST include every single numbered/lettered item present in the
@@ -175,9 +113,15 @@ SYSTEM_PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 # history). Deliberately NOT part of SYSTEM_PROMPT: condensation is a small,
 # fast rewrite task, not a grounded-answer task, and keeping it isolated
 # means a change to one prompt can't accidentally affect the other.
+CLARIFY_PROMPT = """The user asked an ambiguous question with no resolving \
+context. Write ONE short clarifying question naming 2-3 plausible, concrete \
+readings of what they might mean. No preamble, no explanation."""
+
 CONDENSE_PROMPT = """Given a conversation history and a new question, rewrite the \
 new question as a standalone question that can be understood without the \
 conversation history.
+
+
 
 RULES:
 - Only resolve ambiguous references (pronouns like "it"/"that", phrases like \
@@ -207,6 +151,65 @@ class RagGenerationService:
     ):
         self.retrieval_service = retrieval_service
         self.semantic_cache_service = semantic_cache_service
+
+    async def _check_ambiguity(
+        self,
+        query_text: str,
+        conversation_history: Optional[List[dict]],
+        formatted_context: str,
+    ) -> dict:
+        """
+        Jev System One gate, run before generation. Replaces the AMBIGUITY /
+        CONTEXT-RESOLVED REFERENCES / retrieval-lacks-detail prose clauses in
+        SYSTEM_PROMPT with a typed decision. Falls back to "not ambiguous,
+        context sufficient" on any failure - same degrade-safe pattern as
+        _condense_query - so a Jev outage never blocks answering.
+        """
+
+        try:
+            async with AsyncTypeSafeClient() as client:
+                response = await client.system_one(
+                    state={
+                        "domain": (
+                            "This is a question-answering assistant over a single clinical trial "
+                            "protocol document (an Ulcerative Colitis study). Questions are about "
+                            "that protocol's content — eligibility, dosing, procedures, endpoints, etc."
+                        ),
+                        "conversation_history": conversation_history or [],
+                        # "context": formatted_context,
+                        "question": query_text,
+                    },
+                    questions={
+                        "is_ambiguous": Noul(
+                            instructions=(
+                                "The question, given the conversation history, has no "
+                                "single resolvable referent - it's genuinely unclear "
+                                "which of several readings is meant (not just short "
+                                "but already resolved by prior turns)."
+                            )
+                        ),
+                        "category": Choice(
+                            instructions="If ambiguous, which category does it most likely concern?",
+                            criteria={
+                                "inclusion_criteria": None,
+                                "exclusion_criteria": None,
+                                "prohibited_therapy": None,
+                                "other": None,
+                            },
+                        ),
+                        "context_sufficient": Noul(
+                            instructions="The provided CONTEXT contains enough information to answer the question."
+                        ),
+                    },
+                )
+            return {
+                "is_ambiguous": response.answers["is_ambiguous"].noul > 0.7,
+                "category": response.choices["category"].choice,
+                "context_sufficient": response.answers["context_sufficient"].noul > 0.3,
+            }
+        except Exception as e:
+            logger.warning(f"[JEV_CHECK] failed, defaulting to unambiguous: {e}")
+        return {"is_ambiguous": False, "category": None, "context_sufficient": True}
 
     async def _condense_query(
         self,
@@ -274,6 +277,23 @@ class RagGenerationService:
         except Exception as e:
             logger.warning(f"[CONDENSE_QUERY] failed, using original question: {e}")
             return new_question
+
+    async def _generate_clarifying_question(self, query_text: str) -> str:
+        try:
+            client = get_openai_llm_client()
+            response = await client.chat.completions.create(
+                model=settings.llm_model_openai_smart,
+                reasoning_effort="none",
+                max_completion_tokens=100,
+                messages=[
+                    {"role": "system", "content": CLARIFY_PROMPT},
+                    {"role": "user", "content": query_text},
+                ],
+            )
+            return (response.choices[0].message.content or "").strip()
+        except Exception as e:
+            logger.warning(f"[CLARIFY_GEN] failed: {e}")
+            return "Could you clarify what specifically you're asking about?"
 
     def _extract_chunk_metadata(self, doc: dict) -> dict:
         """Extract metadata from a chunk."""
@@ -619,6 +639,27 @@ class RagGenerationService:
         formatted_context = "\n\n".join(
             [self._format_context_compact(chunk) for chunk in compressed_chunks]
         )
+
+        # 5.5. Jev ambiguity/sufficiency gate - short-circuits generation
+        # when the question can't be resolved from context+history, instead
+        # of relying on the generation prompt to self-police it.
+        ambiguity_check = await self._check_ambiguity(
+            query_text, conversation_history, formatted_context
+        )
+        if ambiguity_check["is_ambiguous"]:
+            clarifying_text = await self._generate_clarifying_question(query_text)
+            result = {"response": clarifying_text, "sources": []}
+            timing_info["generation_total_ms"] = (time.perf_counter() - generation_start) * 1000
+            timing_info["jev_short_circuit"] = True
+            self._log_query_trace(
+                query_text,
+                compressed_chunks,
+                formatted_context,
+                result,
+                timing_info,
+                retrieval_query,
+            )
+            return {"result": result, "timing": timing_info}
 
         # 6. Call LLM (Anthropic baseline or OpenAI, per settings.generation_provider)
         llm_start = time.perf_counter()

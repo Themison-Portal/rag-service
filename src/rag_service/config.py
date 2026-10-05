@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     llm_model_openai_fast: str = "gpt-5.6-luna"  # new
     llm_max_tokens: int = 10000
     chunk_overlap_tokens: int = 150
+    typesafe_api_key: str = ""
 
     class Config:
         env_file = ".env"
